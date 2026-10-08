@@ -17,10 +17,11 @@
     "1475.T": {
       "name": "iシェアーズ・コア TOPIX ETF",
       "role": "core",
-      "target_qty": 56,
+      "target_qty": 53,
       "stop_pct": -0.07,
       "trail_trigger_pct": 0.08,
-      "trail_lock_pct": 0.03
+      "trail_lock_pct": 0.03,
+      "order": "単元株（逆指値）"
     },
     "1655.T": {
       "name": "iシェアーズ S&P500 米国株 ETF",
@@ -28,24 +29,44 @@
       "target_qty": 18,
       "stop_pct": -0.07,
       "trail_trigger_pct": 0.08,
-      "trail_lock_pct": 0.03
+      "trail_lock_pct": 0.03,
+      "order": "単元株（逆指値）"
     },
-    "200A.T": {
-      "name": "NEXT FUNDS 日経半導体株指数連動型上場投信",
-      "role": "satellite",
+    "9433.T": {
+      "name": "KDDI",
+      "role": "scenario",
+      "order": "S株",
+      "target_qty": 1,
+      "stop_pct": -0.1,
+      "trail_trigger_pct": 0.12,
+      "trail_lock_pct": 0.04
+    },
+    "9020.T": {
+      "name": "JR東日本",
+      "role": "scenario",
+      "order": "S株",
+      "target_qty": 1,
+      "stop_pct": -0.1,
+      "trail_trigger_pct": 0.12,
+      "trail_lock_pct": 0.04
+    },
+    "4452.T": {
+      "name": "花王",
+      "role": "scenario",
+      "order": "S株",
       "target_qty": 1,
       "stop_pct": -0.1,
       "trail_trigger_pct": 0.12,
       "trail_lock_pct": 0.04
     }
   },
-  "rules_version": "v1.1",
+  "rules_version": "v1.2",
   "entry_plan": {
     "date": "2026-10-13",
-    "note": "9:05以降に最良売り気配で指値。上限は前営業日（10/9）終値+1.5%。14:30に未約定なら取消し、翌営業日に再発注。表の基準終値は10/8の暫定値で、10/9の終値が出たら口数と上限を計算し直す。",
+    "note": "ETF（1475・1655）: 10/13 9:05以降に最良売り気配で指値。上限は10/9終値+1.5%。14:30に未約定なら取消し、翌営業日に再発注。S株（KDDI・JR東日本・花王）: 10/12(祝)中に成行で発注 → 10/13 前場始値で約定。基準終値は10/8の暫定値で、10/9終値で計算し直す。",
     "orders": {
       "1475.T": {
-        "qty": 56,
+        "qty": 53,
         "ref_close": 423.7,
         "limit": 430
       },
@@ -54,22 +75,67 @@
         "ref_close": 887.5,
         "limit": 900
       },
-      "200A.T": {
+      "9433.T": {
         "qty": 1,
-        "ref_close": 4740,
-        "limit": 4811
+        "ref_close": 2905,
+        "limit": null
+      },
+      "9020.T": {
+        "qty": 1,
+        "ref_close": 3350,
+        "limit": null
+      },
+      "4452.T": {
+        "qty": 1,
+        "ref_close": 3522,
+        "limit": null
       }
     },
     "ref_date": "2026-10-08"
   },
   "predictions": {
-    "made_at": "2026-10-08 17:30",
+    "made_at": "2026-10-08 20:00（v1.2）",
     "nav_median": 50400,
-    "nav_50_low": 48800,
-    "nav_50_high": 52000,
+    "nav_50_low": 49000,
+    "nav_50_high": 51800,
     "p_beat_bench": 0.5,
     "p_loss": 0.4,
-    "p_any_stop": 0.25,
-    "down_ratio": 0.7
-  }
+    "p_any_stop": 0.2,
+    "down_ratio": 0.6
+  },
+  "scenarios": [
+    {
+      "ticker": "9433.T",
+      "name": "KDDI",
+      "earn_date": "2026-11-06",
+      "p_beat_model": 0.565,
+      "p_beat_mine": 0.62,
+      "react_beat": 0.011,
+      "react_miss": -0.014,
+      "p_up_mine": 0.51,
+      "why": "第1四半期の利益が市場予想を8.8%上回った。通信は安定しており、上振れ確率をモデルより少し高くした。"
+    },
+    {
+      "ticker": "9020.T",
+      "name": "JR東日本",
+      "earn_date": "2026-10-30",
+      "p_beat_model": 0.545,
+      "p_beat_mine": 0.545,
+      "react_beat": 0.012,
+      "react_miss": -0.021,
+      "p_up_mine": 0.49,
+      "why": "第1四半期は営業収益が過去最高、営業利益+23.7%。ただし純利益は不動産売却益の減少で-13.6%。好材料と悪材料が混在しているので、モデルのまま。"
+    },
+    {
+      "ticker": "4452.T",
+      "name": "花王",
+      "earn_date": "2026-11-05",
+      "p_beat_model": 0.67,
+      "p_beat_mine": 0.65,
+      "react_beat": 0.02,
+      "react_miss": -0.021,
+      "p_up_mine": 0.5,
+      "why": "8月に通期予想を上方修正し、決算翌日は+12.8%。期待が高く上振れのハードルが上がったので、モデルより少し低くした。"
+    }
+  ]
 }

@@ -138,13 +138,18 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
   </section>
 
   <section>
-    <h2>売買ルール（v1・期間中は原則変更しない）</h2>
+    <h2 id="rules-title">売買ルール（期間中は原則変更しない）</h2>
     <div class="rules" id="rules"></div>
   </section>
 
   <section>
     <h2>予想と結果</h2>
     <div class="panel"><div class="tbl-wrap" id="t-pred"></div><p class="note" id="pred-note"></p></div>
+  </section>
+
+  <section>
+    <h2>シナリオ予想（決算）</h2>
+    <div class="panel"><div class="tbl-wrap" id="t-scn"></div><p class="note">決算前に記録した上振れ確率を、モデルの値と私の補正値の両方で残しています。期間終了後に、どちらがよく当たったかを Brier スコア（小さいほど良い）で比べます。根拠の検証は research/RESULTS.md にあります。</p></div>
   </section>
 
   <section>
@@ -255,8 +260,8 @@ function positions() {
   } else {
     document.getElementById("pos-title").textContent = started ? "保有銘柄（なし）" : `初回注文（${C.entry_plan.date}）`;
     const O = C.entry_plan.orders;
-    host.innerHTML = `<table><thead><tr><th>銘柄</th><th>口数</th><th>基準終値（${C.entry_plan.ref_date ? C.entry_plan.ref_date.slice(5).replace("-", "/") : "前日"}）</th><th>指値の上限</th><th>予定金額</th><th>損切り予定</th><th>引き上げ判定</th></tr></thead><tbody>` +
-      Object.entries(O).map(([t, o]) => { const r = P[t]; return `<tr><td><span class="code">${code(t)}</span>${esc(r.name)}</td><td class="n">${o.qty}</td><td class="n">${o.ref_close.toLocaleString()}</td><td class="n">${o.limit.toLocaleString()}</td><td class="n">${yen(o.qty * o.ref_close)}</td><td class="n">${Math.round(o.ref_close * (1 + r.stop_pct)).toLocaleString()}円（${(r.stop_pct * 100).toFixed(0)}%）</td><td class="n">${Math.round(o.ref_close * (1 + r.trail_trigger_pct)).toLocaleString()}円</td></tr>`; }).join("") + "</tbody></table>";
+    host.innerHTML = `<table><thead><tr><th>銘柄</th><th>数量</th><th>基準終値（${C.entry_plan.ref_date ? C.entry_plan.ref_date.slice(5).replace("-", "/") : "前日"}）</th><th>指値の上限</th><th>予定金額</th><th>損切り予定</th><th>引き上げ判定</th></tr></thead><tbody>` +
+      Object.entries(O).map(([t, o]) => { const r = P[t]; return `<tr><td><span class="code">${code(t)}</span>${esc(r.name)}</td><td class="n">${o.qty}</td><td class="n">${o.ref_close.toLocaleString()}</td><td class="n">${o.limit == null ? "成行（S株）" : o.limit.toLocaleString()}</td><td class="n">${yen(o.qty * o.ref_close)}</td><td class="n">${Math.round(o.ref_close * (1 + r.stop_pct)).toLocaleString()}円（${(r.stop_pct * 100).toFixed(0)}%）</td><td class="n">${Math.round(o.ref_close * (1 + r.trail_trigger_pct)).toLocaleString()}円</td></tr>`; }).join("") + "</tbody></table>";
     note.textContent = C.entry_plan.note + " ラインは約定した取得単価から計算し直します。";
   }
   // small multiples: last 30 closes with lines
@@ -293,13 +298,14 @@ function positions() {
 }
 
 function rules() {
-  const P = C.positions, core = P["1475.T"], sat = P["200A.T"];
+  const P = C.positions, core = P["1475.T"], sat = Object.values(P).find(p => p.role !== "core");
   const items = [
-    ["損切り", `中核（1475・1655）は取得単価の <b class="num">${(core.stop_pct * 100).toFixed(0)}%</b>、半導体（200A）は <b class="num">${(sat.stop_pct * 100).toFixed(0)}%</b>。約定直後に逆指値で発注。`],
-    ["利益確保", `終値が中核 <b class="num">+${(core.trail_trigger_pct * 100).toFixed(0)}%</b>／半導体 <b class="num">+${(sat.trail_trigger_pct * 100).toFixed(0)}%</b> に達したら、逆指値を <b class="num">+${(core.trail_lock_pct * 100).toFixed(0)}%</b>／<b class="num">+${(sat.trail_lock_pct * 100).toFixed(0)}%</b> に引き上げる。`],
+    ["損切り", `中核（1475・1655）は取得単価の <b class="num">${(core.stop_pct * 100).toFixed(0)}%</b>（逆指値）、シナリオ枠（S株）は <b class="num">${(sat.stop_pct * 100).toFixed(0)}%</b>（終値で判定し、アラート後に成行）。`],
+    ["利益確保", `終値が中核 <b class="num">+${(core.trail_trigger_pct * 100).toFixed(0)}%</b>／シナリオ枠 <b class="num">+${(sat.trail_trigger_pct * 100).toFixed(0)}%</b> に達したら、損切りラインを <b class="num">+${(core.trail_lock_pct * 100).toFixed(0)}%</b>／<b class="num">+${(sat.trail_lock_pct * 100).toFixed(0)}%</b> に引き上げる。`],
     ["全体の損切り", `評価額が <b class="num">${C.portfolio_stop.nav_below.toLocaleString()}円</b>（−10%）以下で全部売る。損切りした銘柄は期間内に買い直さない。`],
     ["期間満了", `<b class="num">${C.end_date}</b> に全部を引け成行で売る。10/12・11/3 は休場。`],
   ];
+  document.getElementById("rules-title").textContent = `売買ルール（${C.rules_version}・期間中は原則変更しない）`;
   document.getElementById("rules").innerHTML = items.map(([k, v]) => `<div class="rule"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("");
 }
 
@@ -318,9 +324,18 @@ function preds() {
   document.getElementById("pred-note").textContent = "予想は取引開始前に journal.md に記録したものです。結果は最新のデータで自動的に埋まります。";
 }
 
+function scenarios() {
+  const S = C.scenarios || [], host = document.getElementById("t-scn");
+  if (!S.length) { host.closest("section").hidden = true; return; }
+  const pc = v => (v * 100).toFixed(1).replace(/\.0$/, "") + "%";
+  host.innerHTML = `<table><thead><tr><th>銘柄</th><th>決算</th><th>上振れ確率（モデル）</th><th>上振れ確率（私）</th><th>株価が上がる確率</th><th>上振れ時／下振れ時</th><th>結果</th></tr></thead><tbody>` +
+    S.map(x => `<tr><td><span class="code">${code(x.ticker)}</span>${esc(x.name)}</td><td class="n">${x.earn_date.slice(5).replace("-", "/")}</td><td class="n">${pc(x.p_beat_model)}</td><td class="n">${pc(x.p_beat_mine)}</td><td class="n">${pc(x.p_up_mine)}</td><td class="n">+${(x.react_beat * 100).toFixed(1)}%／${(x.react_miss * 100).toFixed(1)}%</td><td>${x.result ? esc(x.result) : (today >= x.earn_date ? "集計待ち" : "発表前")}</td></tr>`).join("") +
+    "</tbody></table>" + S.map(x => `<p class="note"><b>${esc(x.name)}</b>: ${esc(x.why)}</p>`).join("");
+}
+
 function trades() {
   const host = document.getElementById("p-trades");
-  if (!D.trades.length) { host.innerHTML = `<div class="empty"><b>まだ約定はありません</b><span>「1475 を 56口、424円で買った」のように報告すると、ここに記録されます。</span></div>`; return; }
+  if (!D.trades.length) { host.innerHTML = `<div class="empty"><b>まだ約定はありません</b><span>「1475 を 53口、424円で買った」のように報告すると、ここに記録されます。</span></div>`; return; }
   host.innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>日時</th><th>銘柄</th><th>売買</th><th>口数</th><th>単価</th><th>金額</th><th>手数料</th><th>税</th><th>メモ</th></tr></thead><tbody>` +
     D.trades.map(t => `<tr><td class="n">${t.date} ${t.time || ""}</td><td><span class="code">${code(t.ticker)}</span>${esc(t.name)}</td><td>${t.side === "BUY" ? "買い" : "売り"}</td><td class="n">${t.qty}</td><td class="n">${Number(t.price).toLocaleString()}</td><td class="n">${yen(t.qty * t.price)}</td><td class="n">${yen(t.fee)}</td><td class="n">${yen(t.tax)}</td><td style="text-align:left;white-space:normal">${esc(t.note || "")}</td></tr>`).join("") + "</tbody></table></div>";
 }
@@ -341,7 +356,7 @@ function md(src) {
 }
 
 function renderCharts() { navChart(); positions(); }
-head(); kpis(); rules(); preds(); trades(); renderCharts();
+head(); kpis(); rules(); preds(); scenarios(); trades(); renderCharts();
 document.getElementById("journal").innerHTML = md(D.journal);
 for (const [id, v] of [["b-pre", false], ["b-post", true]]) document.getElementById(id).onclick = () => { afterTax = v; document.getElementById("b-pre").setAttribute("aria-pressed", !v); document.getElementById("b-post").setAttribute("aria-pressed", v); navChart(); };
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderCharts);

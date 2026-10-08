@@ -218,11 +218,18 @@ def alerts(now: datetime | None = None) -> list[dict]:
         lv = stop_levels(cfg, p, hi)
         name = cfg["positions"].get(p.ticker, {}).get("name", p.ticker)
         if lv and px <= lv["stop"]:
-            out.append({"level": "action", "msg": f"【損切り/利益確保ライン到達】{name}({p.ticker}) 現在値 {px:,.1f}円（{ts}）≦ ライン {lv['stop']:,.1f}円。"
-                        f"SBIの逆指値が約定しているはずです。約定を確認し、未約定なら {p.qty} 口を成行で売ってください。"})
+            if cfg["positions"].get(p.ticker, {}).get("order") == "S株":
+                out.append({"level": "action", "msg": f"【損切り/利益確保ライン到達・S株】{name}({p.ticker}) 現在値 {px:,.1f}円（{ts}）≦ ライン {lv['stop']:,.1f}円。"
+                            f"ルールは終値で判定します。15:30以降の終値でもライン以下なら、{p.qty} 株を成行で売り注文してください（翌営業日の前場始値で約定）。"})
+            else:
+                out.append({"level": "action", "msg": f"【損切り/利益確保ライン到達】{name}({p.ticker}) 現在値 {px:,.1f}円（{ts}）≦ ライン {lv['stop']:,.1f}円。"
+                            f"SBIの逆指値が約定しているはずです。約定を確認し、未約定なら {p.qty} 口を成行で売ってください。"})
         elif lv and lv["locked"] and px > lv["stop"]:
-            out.append({"level": "info", "msg": f"{name}: 含み益が+{cfg['positions'][p.ticker]['trail_trigger_pct']*100:.0f}%に達したことがあります。"
-                        f"逆指値を {lv['stop']:,.0f}円 以上に引き上げてあるか確認してください（取得単価 {lv['avg']:,.1f}円）。"})
+            if cfg["positions"].get(p.ticker, {}).get("order") == "S株":
+                out.append({"level": "info", "msg": f"{name}: 終値が+{cfg['positions'][p.ticker]['trail_trigger_pct']*100:.0f}%に達したため、利益確保ラインは {lv['stop']:,.0f}円 です（S株なのでアラートで監視します）。"})
+            else:
+                out.append({"level": "info", "msg": f"{name}: 含み益が+{cfg['positions'][p.ticker]['trail_trigger_pct']*100:.0f}%に達したことがあります。"
+                            f"逆指値を {lv['stop']:,.0f}円 以上に引き上げてあるか確認してください（取得単価 {lv['avg']:,.1f}円）。"})
     if held and nav <= cfg["portfolio_stop"]["nav_below"]:
         out.append({"level": "action", "msg": f"【全体の損切り】評価額 {nav:,.0f}円 が {cfg['portfolio_stop']['nav_below']:,}円 以下です。全銘柄を売却してください。"})
     if held and now.date() >= end:
