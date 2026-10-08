@@ -1,0 +1,349 @@
+<title>5万円運用ノート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: a trading ledger. Status and money first, then the comparison chart, then positions with their sell lines, rules, predictions, the trade log and the decision journal */
+:root {
+  --bg: #f4f5f2;
+  --surface: #ffffff;
+  --ink: #15171a;
+  --ink-2: #474c55;
+  --muted: #767c86;
+  --line: #e0e2dd;
+  --grid: #ecede9;
+  --mine: #2a78d6;   /* 運用 */
+  --bench: #eb6834;  /* ベンチマーク */
+  --stop: #e34948;   /* 損切りライン（状態色: 重大） */
+  --lock: #0ca30c;   /* 利益確保ライン（状態色: 良好） */
+  --warn: #fab219;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121412; --surface: #1b1d1b; --ink: #f0f1ee; --ink-2: #c4c7c1; --muted: #8e938b;
+    --line: #2d302c; --grid: #252825; --mine: #3987e5; --bench: #d95926; --stop: #e66767; --lock: #2fbf2f; --warn: #fab219;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121412; --surface: #1b1d1b; --ink: #f0f1ee; --ink-2: #c4c7c1; --muted: #8e938b;
+  --line: #2d302c; --grid: #252825; --mine: #3987e5; --bench: #d95926; --stop: #e66767; --lock: #2fbf2f; --warn: #fab219;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.7; }
+.wrap { max-width: 1000px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 72px; display: grid; gap: 44px; }
+h1 { font-size: clamp(26px, 4.6vw, 36px); font-weight: 900; margin: 0; line-height: 1.25; letter-spacing: .01em; text-wrap: balance; }
+h2 { font-size: 20px; font-weight: 700; margin: 0; text-wrap: balance; }
+h3 { font-size: 15px; font-weight: 700; margin: 0; }
+p { margin: 0; max-width: 68ch; color: var(--ink-2); }
+.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+header { display: grid; gap: 12px; }
+.toprow { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; padding: 3px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.pill.live i { background: var(--lock); }
+.pill.pre i { background: var(--warn); }
+.meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.meta b { color: var(--ink); font-weight: 500; font-family: var(--font-data); }
+
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--line); gap: 1px; }
+.kpi { background: var(--surface); padding: 16px 18px; display: grid; gap: 2px; min-width: 0; }
+.kpi .lab { font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+.kpi .val { font-family: var(--font-data); font-size: 26px; font-weight: 500; line-height: 1.25; }
+.kpi .sub { font-family: var(--font-data); font-size: 12.5px; color: var(--ink-2); }
+.up { color: var(--lock); } .down { color: var(--stop); }
+
+section { display: grid; gap: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.panel-title { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.sw.dash { background: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px) !important; height: 2px; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; gap: 2px; }
+.toggle button { font: inherit; font-size: 12.5px; border: 0; background: transparent; color: var(--ink-2); padding: 3px 12px; border-radius: 999px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--mine); outline-offset: 2px; }
+.empty { border: 1px dashed var(--line); border-radius: 8px; padding: 22px; text-align: center; color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
+.empty b { color: var(--ink); }
+
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 500; color: var(--muted); font-size: 12px; }
+td.n { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+td .code { font-family: var(--font-data); color: var(--muted); font-size: 12px; margin-right: 6px; }
+.tag { display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); }
+.tag.lock { border-color: var(--lock); color: var(--lock); }
+
+.minis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.mini { display: grid; gap: 6px; min-width: 0; }
+.mini h3 { font-size: 13.5px; }
+.mini .note { font-size: 12px; }
+
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.rule { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.rule .k { font-size: 12px; color: var(--muted); }
+.rule .v { font-size: 14.5px; }
+.note { font-size: 12.5px; color: var(--muted); line-height: 1.65; }
+
+details.journal { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+details.journal summary { cursor: pointer; font-size: 13.5px; font-weight: 700; color: var(--ink-2); }
+.md { display: grid; gap: 10px; margin-top: 12px; font-size: 14px; }
+.md h1, .md h2 { font-size: 17px; } .md h3 { font-size: 15px; margin-top: 6px; }
+.md hr { border: 0; border-top: 1px solid var(--line); width: 100%; margin: 4px 0; }
+.md ul, .md ol { margin: 0; padding-left: 1.4em; color: var(--ink-2); }
+.md p { color: var(--ink-2); }
+
+.tip { position: fixed; pointer-events: none; z-index: 10; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.5; box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+.tip .k { color: var(--muted); } .tip .v { font-family: var(--font-data); }
+footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 4px; }
+@media (max-width: 760px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .minis, .rules { grid-template-columns: minmax(0, 1fr); }
+  .wrap { padding-inline: 16px; gap: 36px; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="toprow"><span class="pill" id="state"><i></i><span></span></span><span class="meta" id="meta"></span></div>
+    <h1>5万円運用ノート</h1>
+    <p>SBI証券の特定口座で、5万円を1か月運用した記録です。発注は Fe さん、判断と記録は Claude が担当しています。比較対象は、同じ日に5万円で日経225連動ETF（1321）を買って持ち続けた場合です。</p>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">評価額の推移（円）</span>
+        <div class="legend"><span><i class="sw" style="background:var(--mine)"></i>運用</span><span><i class="sw" style="background:var(--bench)"></i>日経225 ETF（1321）</span><span style="color:var(--muted)"><i class="sw dash"></i>元本 50,000円</span></div>
+        <div class="toggle" role="group" aria-label="税金の扱い"><button type="button" id="b-pre" aria-pressed="true">税引前</button><button type="button" id="b-post" aria-pressed="false">税引後</button></div>
+      </div>
+      <div class="chart" id="c-nav"></div>
+      <p class="note">税引後は「その日に全部売った場合」の手取り額です（売却益に 20.315% を源泉徴収、同じ口座内の損失と通算）。売買手数料は SBI の条件を満たせば0円で、約定の報告どおりに記録しています。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="pos-title">保有銘柄と売りのライン</h2>
+    <div class="panel"><div class="tbl-wrap" id="t-pos"></div><p class="note" id="pos-note"></p></div>
+    <div class="minis" id="minis"></div>
+  </section>
+
+  <section>
+    <h2>売買ルール（v1・期間中は原則変更しない）</h2>
+    <div class="rules" id="rules"></div>
+  </section>
+
+  <section>
+    <h2>予想と結果</h2>
+    <div class="panel"><div class="tbl-wrap" id="t-pred"></div><p class="note" id="pred-note"></p></div>
+  </section>
+
+  <section>
+    <h2>約定履歴</h2>
+    <div class="panel" id="p-trades"></div>
+  </section>
+
+  <section>
+    <details class="journal" open><summary>判断記録（journal.md）</summary><div class="md" id="journal"></div></details>
+  </section>
+
+  <footer>
+    <span>記録の正本: newalwayg-create/kabu の main ブランチ、trading/ フォルダ（trades.csv・plan.md・journal.md）。</span>
+    <span id="gen"></span>
+    <span>株価: Yahoo Finance（東証は約20分遅れ）。これは投資助言ではなく、運用の記録です。</span>
+  </footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const D = __DATA__;
+const NS = "http://www.w3.org/2000/svg";
+const C = D.config;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const yen = v => v == null ? "–" : Math.round(v).toLocaleString("ja-JP") + "円";
+const sgn = v => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(Math.round(v)).toLocaleString("ja-JP");
+const pct = v => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v * 100).toFixed(2) + "%";
+const cls = v => v > 0 ? "up" : v < 0 ? "down" : "";
+const code = t => t.replace(".T", "");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+function el(tag, a = {}, p) { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); if (p) p.appendChild(e); return e; }
+function svg(w, h, host) { host.innerHTML = ""; return el("svg", {viewBox: `0 0 ${w} ${h}`, role: "img"}, host); }
+function txt(p, x, y, s, a = {}) { const t = el("text", {x, y, fill: css("--muted"), "font-size": 11, "font-family": "IBM Plex Mono, monospace", ...a}, p); t.textContent = s; return t; }
+const tip = document.getElementById("tip");
+function showTip(e, html) { tip.innerHTML = html; tip.hidden = false; const r = tip.getBoundingClientRect(); let x = e.clientX + 14, y = e.clientY + 14; if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14; tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px"; }
+const hideTip = () => tip.hidden = true;
+
+const today = D.generated.slice(0, 10);
+const started = D.trades.length > 0;
+const ended = today > C.end_date && !D.holdings.length && started;
+const last = D.nav.length ? D.nav[D.nav.length - 1] : null;
+
+function head() {
+  const st = document.getElementById("state");
+  st.className = "pill " + (ended ? "" : started ? "live" : "pre");
+  st.querySelector("span").textContent = ended ? "運用終了" : started ? "運用中" : "開始前（初回注文待ち）";
+  const days = Math.round((Date.parse(C.end_date) - Date.parse(C.start_date)) / 864e5);
+  const el_ = Math.max(0, Math.min(days, Math.round((Date.parse(today) - Date.parse(C.start_date)) / 864e5)));
+  document.getElementById("meta").innerHTML = `<span>期間 <b>${C.start_date} 〜 ${C.end_date}</b></span><span>経過 <b>${el_}/${days}日</b></span><span>ルール <b>${C.rules_version}</b></span>`;
+  document.getElementById("gen").textContent = `データ更新: ${D.generated} JST`;
+}
+
+function kpis() {
+  const cap = C.capital;
+  const nav = last ? last.nav : cap, bn = last ? last.bench_nav : cap;
+  const navT = last ? last.nav_after_tax : cap, bnT = last ? last.bench_after_tax : cap;
+  const items = [
+    ["運用の評価額", yen(nav), `<span class="${cls(nav - cap)}">${sgn(nav - cap)}円（${pct(nav / cap - 1)}）</span>`],
+    ["日経225 ETF の評価額", yen(bn), `<span class="${cls(bn - cap)}">${sgn(bn - cap)}円（${pct(bn / cap - 1)}）</span>`],
+    ["差（運用 − ETF）", `<span class="${cls(nav - bn)}">${sgn(nav - bn)}円</span>`, `税引後 ${sgn(navT - bnT)}円`],
+    ["現金", yen(D.cash), `実現損益 ${sgn(D.realized)}円・源泉 ${yen(D.tax_paid)}`],
+  ];
+  document.getElementById("kpis").innerHTML = items.map(([l, v, s]) => `<div class="kpi"><span class="lab">${l}</span><span class="val">${v}</span><span class="sub">${s}</span></div>`).join("");
+}
+
+let afterTax = false;
+function navChart() {
+  const host = document.getElementById("c-nav");
+  if (!D.nav.length) {
+    host.innerHTML = `<div class="empty"><b>${C.entry_plan.date} の初回注文の約定後に、ここに推移が表示されます</b><span>運用の評価額（青）と、日経225 ETF を同じ日に5万円分買った場合（橙）を毎日比べます。</span></div>`;
+    return;
+  }
+  const N = D.nav, w = 760, h = 300, L = 62, R = 14, T = 12, B = 30;
+  const a = afterTax ? "nav_after_tax" : "nav", b = afterTax ? "bench_after_tax" : "bench_nav";
+  const vals = N.flatMap(r => [r[a], r[b]]).concat([C.capital]);
+  let lo = Math.min(...vals), hi = Math.max(...vals); const pad = Math.max(500, (hi - lo) * .15); lo -= pad; hi += pad;
+  const step = [500, 1000, 2000, 2500, 5000].find(s => (hi - lo) / s <= 6) || 5000;
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const t0 = Date.parse(C.start_date), t1 = Math.max(Date.parse(C.end_date), Date.parse(N[N.length - 1].date));
+  const xs = d => L + (Date.parse(d) - t0) / (t1 - t0) * (w - L - R), ys = v => T + (hi - v) / (hi - lo) * (h - T - B);
+  const s = svg(w, h, host);
+  for (let v = lo; v <= hi + 1; v += step) { el("line", {x1: L, x2: w - R, y1: ys(v), y2: ys(v), stroke: css("--grid")}, s); txt(s, L - 6, ys(v) + 4, v.toLocaleString(), {"text-anchor": "end"}); }
+  el("line", {x1: L, x2: w - R, y1: ys(C.capital), y2: ys(C.capital), stroke: css("--muted"), "stroke-dasharray": "4 3"}, s);
+  for (let d = new Date(t0); d.getTime() <= t1; d.setDate(d.getDate() + 7)) { const ds = d.toISOString().slice(0, 10); txt(s, xs(ds), h - 8, ds.slice(5).replace("-", "/"), {"text-anchor": "middle"}); }
+  for (const [k, c] of [[b, "--bench"], [a, "--mine"]]) {
+    el("path", {d: N.map((r, i) => (i ? "L" : "M") + xs(r.date).toFixed(1) + "," + ys(r[k]).toFixed(1)).join(""), fill: "none", stroke: css(c), "stroke-width": 2, "stroke-linejoin": "round"}, s);
+    const e = N[N.length - 1]; el("circle", {cx: xs(e.date), cy: ys(e[k]), r: 4.5, fill: css(c), stroke: css("--surface"), "stroke-width": 2}, s);
+  }
+  const cross = el("line", {y1: T, y2: h - B, stroke: css("--muted"), "stroke-dasharray": "3 3", visibility: "hidden"}, s);
+  const hit = el("rect", {x: L, y: T, width: w - L - R, height: h - T - B, fill: "transparent"}, s);
+  hit.addEventListener("pointermove", e => {
+    const pt = s.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const q = pt.matrixTransform(s.getScreenCTM().inverse());
+    let best = N[0]; for (const r of N) if (Math.abs(xs(r.date) - q.x) < Math.abs(xs(best.date) - q.x)) best = r;
+    cross.setAttribute("x1", xs(best.date)); cross.setAttribute("x2", xs(best.date)); cross.setAttribute("visibility", "visible");
+    showTip(e, `<b>${best.date}</b><br><span class="k">運用</span> <span class="v">${yen(best[a])}</span><br><span class="k">日経225 ETF</span> <span class="v">${yen(best[b])}</span><br><span class="k">差</span> <span class="v">${sgn(best[a] - best[b])}円</span>`);
+  });
+  hit.addEventListener("pointerleave", () => { cross.setAttribute("visibility", "hidden"); hideTip(); });
+}
+
+function positions() {
+  const host = document.getElementById("t-pos"), note = document.getElementById("pos-note");
+  const P = C.positions;
+  if (D.holdings.length) {
+    document.getElementById("pos-title").textContent = "保有銘柄と売りのライン";
+    host.innerHTML = `<table><thead><tr><th>銘柄</th><th>口数</th><th>取得単価</th><th>終値</th><th>評価損益</th><th>損切り/利益確保</th><th>ラインまで</th><th>引き上げ判定</th></tr></thead><tbody>` +
+      D.holdings.map(h => `<tr><td><span class="code">${code(h.ticker)}</span>${esc(h.name)}</td><td class="n">${h.qty}</td><td class="n">${h.avg.toLocaleString()}</td><td class="n">${h.last.toLocaleString()}</td><td class="n ${cls(h.pnl)}">${sgn(h.pnl)}円</td><td class="n">${h.stop.toLocaleString()}円 ${h.locked ? '<span class="tag lock">引き上げ済み</span>' : ""}</td><td class="n">${pct(h.stop / h.last - 1)}</td><td class="n">${h.locked ? "–" : h.trigger.toLocaleString() + "円"}</td></tr>`).join("") + "</tbody></table>";
+    note.textContent = "損切りラインは SBI の逆指値（現在値が○円以下で成行売り）で発注しておきます。引き上げ判定は終値で行います。";
+  } else {
+    document.getElementById("pos-title").textContent = started ? "保有銘柄（なし）" : `初回注文（${C.entry_plan.date}）`;
+    const O = C.entry_plan.orders;
+    host.innerHTML = `<table><thead><tr><th>銘柄</th><th>口数</th><th>前日終値</th><th>指値の上限</th><th>予定金額</th><th>損切り予定</th><th>引き上げ判定</th></tr></thead><tbody>` +
+      Object.entries(O).map(([t, o]) => { const r = P[t]; return `<tr><td><span class="code">${code(t)}</span>${esc(r.name)}</td><td class="n">${o.qty}</td><td class="n">${o.ref_close.toLocaleString()}</td><td class="n">${o.limit.toLocaleString()}</td><td class="n">${yen(o.qty * o.ref_close)}</td><td class="n">${Math.round(o.ref_close * (1 + r.stop_pct)).toLocaleString()}円（${(r.stop_pct * 100).toFixed(0)}%）</td><td class="n">${Math.round(o.ref_close * (1 + r.trail_trigger_pct)).toLocaleString()}円</td></tr>`; }).join("") + "</tbody></table>";
+    note.textContent = C.entry_plan.note + " ラインは約定した取得単価から計算し直します。";
+  }
+  // small multiples: last 30 closes with lines
+  const box = document.getElementById("minis"); box.innerHTML = "";
+  for (const [t, r] of Object.entries(P)) {
+    const ser = D.recent[t]; if (!ser || !ser.length) continue;
+    const h = D.holdings.find(x => x.ticker === t);
+    const sold = started && !h && D.trades.some(x => x.ticker === t);
+    if (sold) {
+      const div = document.createElement("div"); div.className = "panel mini";
+      div.innerHTML = `<h3><span class="code num" style="color:var(--muted);margin-right:6px">${code(t)}</span>${esc(r.name)}</h3><div class="empty">保有なし（売却済み）</div>`;
+      box.appendChild(div); continue;
+    }
+    const base = h ? h.avg : C.entry_plan.orders[t].ref_close;
+    const stop = h ? h.stop : base * (1 + r.stop_pct), trig = h ? (h.locked ? null : h.trigger) : base * (1 + r.trail_trigger_pct);
+    const div = document.createElement("div"); div.className = "panel mini";
+    div.innerHTML = `<h3><span class="code num" style="color:var(--muted);margin-right:6px">${code(t)}</span>${esc(r.name.replace("NEXT FUNDS ", "").replace("iシェアーズ・コア ", "").replace("iシェアーズ ", ""))}</h3><div class="chart"></div><div class="note">直近30営業日の終値。<span style="color:var(--stop)">赤</span>＝損切り ${Math.round(stop).toLocaleString()}円${trig ? `、<span style="color:var(--lock)">緑</span>＝引き上げ判定 ${Math.round(trig).toLocaleString()}円` : ""}</div>`;
+    box.appendChild(div);
+    const w = 320, hh = 150, L = 44, R = 8, T = 8, B = 18, host = div.querySelector(".chart");
+    const vals = ser.map(x => x[1]).concat([stop, trig || stop]);
+    const lo = Math.min(...vals) * .99, hi = Math.max(...vals) * 1.01;
+    const xs = i => L + i / (ser.length - 1) * (w - L - R), ys = v => T + (hi - v) / (hi - lo) * (hh - T - B);
+    const s = svg(w, hh, host);
+    for (const v of [lo + (hi - lo) * .1, (lo + hi) / 2, hi - (hi - lo) * .1]) { el("line", {x1: L, x2: w - R, y1: ys(v), y2: ys(v), stroke: css("--grid")}, s); txt(s, L - 4, ys(v) + 4, Math.round(v).toLocaleString(), {"text-anchor": "end", "font-size": 10}); }
+    el("line", {x1: L, x2: w - R, y1: ys(stop), y2: ys(stop), stroke: css("--stop"), "stroke-width": 1.5, "stroke-dasharray": "4 3"}, s);
+    if (trig) el("line", {x1: L, x2: w - R, y1: ys(trig), y2: ys(trig), stroke: css("--lock"), "stroke-width": 1.5, "stroke-dasharray": "4 3"}, s);
+    el("path", {d: ser.map((x, i) => (i ? "L" : "M") + xs(i).toFixed(1) + "," + ys(x[1]).toFixed(1)).join(""), fill: "none", stroke: css("--mine"), "stroke-width": 2}, s);
+    el("circle", {cx: xs(ser.length - 1), cy: ys(ser[ser.length - 1][1]), r: 4, fill: css("--mine"), stroke: css("--surface"), "stroke-width": 2}, s);
+    txt(s, L, hh - 4, ser[0][0].slice(5).replace("-", "/"), {"font-size": 10}); txt(s, w - R, hh - 4, ser[ser.length - 1][0].slice(5).replace("-", "/"), {"font-size": 10, "text-anchor": "end"});
+    const hit = el("rect", {x: L, y: T, width: w - L - R, height: hh - T - B, fill: "transparent"}, s);
+    hit.addEventListener("pointermove", e => { const pt = s.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const q = pt.matrixTransform(s.getScreenCTM().inverse()); const i = Math.max(0, Math.min(ser.length - 1, Math.round((q.x - L) / (w - L - R) * (ser.length - 1)))); showTip(e, `<b>${ser[i][0]}</b><br><span class="k">終値</span> <span class="v">${ser[i][1].toLocaleString()}円</span>`); });
+    hit.addEventListener("pointerleave", hideTip);
+  }
+}
+
+function rules() {
+  const P = C.positions, core = P["1475.T"], sat = P["200A.T"];
+  const items = [
+    ["損切り", `中核（1475・1655）は取得単価の <b class="num">${(core.stop_pct * 100).toFixed(0)}%</b>、半導体（200A）は <b class="num">${(sat.stop_pct * 100).toFixed(0)}%</b>。約定直後に逆指値で発注。`],
+    ["利益確保", `終値が中核 <b class="num">+${(core.trail_trigger_pct * 100).toFixed(0)}%</b>／半導体 <b class="num">+${(sat.trail_trigger_pct * 100).toFixed(0)}%</b> に達したら、逆指値を <b class="num">+${(core.trail_lock_pct * 100).toFixed(0)}%</b>／<b class="num">+${(sat.trail_lock_pct * 100).toFixed(0)}%</b> に引き上げる。`],
+    ["全体の損切り", `評価額が <b class="num">${C.portfolio_stop.nav_below.toLocaleString()}円</b>（−10%）以下で全部売る。損切りした銘柄は期間内に買い直さない。`],
+    ["期間満了", `<b class="num">${C.end_date}</b> に全部を引け成行で売る。11/3 は休場。`],
+  ];
+  document.getElementById("rules").innerHTML = items.map(([k, v]) => `<div class="rule"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("");
+}
+
+function preds() {
+  const P = C.predictions, done = ended || today >= C.end_date;
+  const nav = last ? last.nav : null, bn = last ? last.bench_nav : null;
+  const stops = D.trades.filter(t => t.side === "SELL" && String(t.note).includes("損切")).length;
+  const rows = [
+    ["運用の評価額（11/9 終値・税引前）", `中央値 ${yen(P.nav_median)}（50%の範囲 ${P.nav_50_low.toLocaleString()}〜${P.nav_50_high.toLocaleString()}円）`, nav == null ? "–" : yen(nav) + (done ? "" : "（途中）")],
+    ["運用がベンチマークを上回る確率", Math.round(P.p_beat_bench * 100) + "%", nav == null ? "–" : (nav > bn ? "上回っている" : "下回っている") + (done ? "" : "（途中）")],
+    ["損を出して終わる確率", Math.round(P.p_loss * 100) + "%", nav == null ? "–" : (nav < C.capital ? "損失" : "利益") + (done ? "" : "（途中）")],
+    ["損切りが1回以上発動する確率", Math.round(P.p_any_stop * 100) + "%", started ? (stops ? `${stops}回発動` : "未発動") : "–"],
+    ["日経平均が下げた場合の運用の下落率", `日経平均の約${Math.round(P.down_ratio * 10)}割`, "期間終了後に検証"],
+  ];
+  document.getElementById("t-pred").innerHTML = `<table><thead><tr><th>項目</th><th>予想（${P.made_at}）</th><th>結果</th></tr></thead><tbody>` + rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("") + "</tbody></table>";
+  document.getElementById("pred-note").textContent = "予想は取引開始前に journal.md に記録したものです。結果は最新のデータで自動的に埋まります。";
+}
+
+function trades() {
+  const host = document.getElementById("p-trades");
+  if (!D.trades.length) { host.innerHTML = `<div class="empty"><b>まだ約定はありません</b><span>「1475 を 56口、424円で買った」のように報告すると、ここに記録されます。</span></div>`; return; }
+  host.innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>日時</th><th>銘柄</th><th>売買</th><th>口数</th><th>単価</th><th>金額</th><th>手数料</th><th>税</th><th>メモ</th></tr></thead><tbody>` +
+    D.trades.map(t => `<tr><td class="n">${t.date} ${t.time || ""}</td><td><span class="code">${code(t.ticker)}</span>${esc(t.name)}</td><td>${t.side === "BUY" ? "買い" : "売り"}</td><td class="n">${t.qty}</td><td class="n">${Number(t.price).toLocaleString()}</td><td class="n">${yen(t.qty * t.price)}</td><td class="n">${yen(t.fee)}</td><td class="n">${yen(t.tax)}</td><td style="text-align:left;white-space:normal">${esc(t.note || "")}</td></tr>`).join("") + "</tbody></table></div>";
+}
+
+function md(src) {
+  const out = []; const L = src.split("\n"); let i = 0;
+  const inl = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`(.+?)`/g, "<code>$1</code>");
+  while (i < L.length) {
+    const l = L[i];
+    if (/^#{1,3} /.test(l)) { const n = l.match(/^#+/)[0].length; out.push(`<h${n + 1}>${inl(l.slice(n + 1))}</h${n + 1}>`); i++; }
+    else if (/^---\s*$/.test(l)) { out.push("<hr>"); i++; }
+    else if (/^\|/.test(l)) { const rows = []; while (i < L.length && /^\|/.test(L[i])) rows.push(L[i++]); const cells = r => r.replace(/^\||\|$/g, "").split("|").map(c => c.trim()); const body = rows.slice(2).map(r => `<tr>${cells(r).map(c => `<td style="white-space:normal">${inl(c)}</td>`).join("")}</tr>`).join(""); out.push(`<div class="tbl-wrap"><table><thead><tr>${cells(rows[0]).map(c => `<th>${inl(c)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>`); }
+    else if (/^\s*([-*]|\d+\.) /.test(l)) { const ord = /^\s*\d+\./.test(l); const it = []; while (i < L.length && /^\s*([-*]|\d+\.) /.test(L[i])) it.push(L[i++].replace(/^\s*([-*]|\d+\.) /, "")); out.push(`<${ord ? "ol" : "ul"}>${it.map(x => `<li>${inl(x)}</li>`).join("")}</${ord ? "ol" : "ul"}>`); }
+    else if (l.trim()) { const para = []; while (i < L.length && L[i].trim() && !/^(#|\||---|\s*([-*]|\d+\.) )/.test(L[i])) para.push(L[i++]); out.push(`<p>${inl(para.join(""))}</p>`); }
+    else i++;
+  }
+  return out.join("");
+}
+
+function renderCharts() { navChart(); positions(); }
+head(); kpis(); rules(); preds(); trades(); renderCharts();
+document.getElementById("journal").innerHTML = md(D.journal);
+for (const [id, v] of [["b-pre", false], ["b-post", true]]) document.getElementById(id).onclick = () => { afterTax = v; document.getElementById("b-pre").setAttribute("aria-pressed", !v); document.getElementById("b-post").setAttribute("aria-pressed", v); navChart(); };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderCharts);
+new MutationObserver(renderCharts).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+</script>
