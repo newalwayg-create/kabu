@@ -255,7 +255,7 @@ function positions() {
   } else {
     document.getElementById("pos-title").textContent = started ? "保有銘柄（なし）" : `初回注文（${C.entry_plan.date}）`;
     const O = C.entry_plan.orders;
-    host.innerHTML = `<table><thead><tr><th>銘柄</th><th>口数</th><th>前日終値</th><th>指値の上限</th><th>予定金額</th><th>損切り予定</th><th>引き上げ判定</th></tr></thead><tbody>` +
+    host.innerHTML = `<table><thead><tr><th>銘柄</th><th>口数</th><th>基準終値（${C.entry_plan.ref_date ? C.entry_plan.ref_date.slice(5).replace("-", "/") : "前日"}）</th><th>指値の上限</th><th>予定金額</th><th>損切り予定</th><th>引き上げ判定</th></tr></thead><tbody>` +
       Object.entries(O).map(([t, o]) => { const r = P[t]; return `<tr><td><span class="code">${code(t)}</span>${esc(r.name)}</td><td class="n">${o.qty}</td><td class="n">${o.ref_close.toLocaleString()}</td><td class="n">${o.limit.toLocaleString()}</td><td class="n">${yen(o.qty * o.ref_close)}</td><td class="n">${Math.round(o.ref_close * (1 + r.stop_pct)).toLocaleString()}円（${(r.stop_pct * 100).toFixed(0)}%）</td><td class="n">${Math.round(o.ref_close * (1 + r.trail_trigger_pct)).toLocaleString()}円</td></tr>`; }).join("") + "</tbody></table>";
     note.textContent = C.entry_plan.note + " ラインは約定した取得単価から計算し直します。";
   }
@@ -298,7 +298,7 @@ function rules() {
     ["損切り", `中核（1475・1655）は取得単価の <b class="num">${(core.stop_pct * 100).toFixed(0)}%</b>、半導体（200A）は <b class="num">${(sat.stop_pct * 100).toFixed(0)}%</b>。約定直後に逆指値で発注。`],
     ["利益確保", `終値が中核 <b class="num">+${(core.trail_trigger_pct * 100).toFixed(0)}%</b>／半導体 <b class="num">+${(sat.trail_trigger_pct * 100).toFixed(0)}%</b> に達したら、逆指値を <b class="num">+${(core.trail_lock_pct * 100).toFixed(0)}%</b>／<b class="num">+${(sat.trail_lock_pct * 100).toFixed(0)}%</b> に引き上げる。`],
     ["全体の損切り", `評価額が <b class="num">${C.portfolio_stop.nav_below.toLocaleString()}円</b>（−10%）以下で全部売る。損切りした銘柄は期間内に買い直さない。`],
-    ["期間満了", `<b class="num">${C.end_date}</b> に全部を引け成行で売る。11/3 は休場。`],
+    ["期間満了", `<b class="num">${C.end_date}</b> に全部を引け成行で売る。10/12・11/3 は休場。`],
   ];
   document.getElementById("rules").innerHTML = items.map(([k, v]) => `<div class="rule"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("");
 }
@@ -308,7 +308,7 @@ function preds() {
   const nav = last ? last.nav : null, bn = last ? last.bench_nav : null;
   const stops = D.trades.filter(t => t.side === "SELL" && String(t.note).includes("損切")).length;
   const rows = [
-    ["運用の評価額（11/9 終値・税引前）", `中央値 ${yen(P.nav_median)}（50%の範囲 ${P.nav_50_low.toLocaleString()}〜${P.nav_50_high.toLocaleString()}円）`, nav == null ? "–" : yen(nav) + (done ? "" : "（途中）")],
+    [`運用の評価額（${C.end_date.slice(5).replace("-", "/")} 終値・税引前）`, `中央値 ${yen(P.nav_median)}（50%の範囲 ${P.nav_50_low.toLocaleString()}〜${P.nav_50_high.toLocaleString()}円）`, nav == null ? "–" : yen(nav) + (done ? "" : "（途中）")],
     ["運用がベンチマークを上回る確率", Math.round(P.p_beat_bench * 100) + "%", nav == null ? "–" : (nav > bn ? "上回っている" : "下回っている") + (done ? "" : "（途中）")],
     ["損を出して終わる確率", Math.round(P.p_loss * 100) + "%", nav == null ? "–" : (nav < C.capital ? "損失" : "利益") + (done ? "" : "（途中）")],
     ["損切りが1回以上発動する確率", Math.round(P.p_any_stop * 100) + "%", started ? (stops ? `${stops}回発動` : "未発動") : "–"],
