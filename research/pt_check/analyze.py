@@ -18,7 +18,12 @@ from frontier import ledoit_wolf, solve  # noqa: E402
 OUT = ROOT / "data" / "research" / "pt_check"
 PT = {"4507.T": "塩野義製薬", "6954.T": "ファナック", "5802.T": "住友電工", "3778.T": "さくらインターネット",
       "1568.T": "TOPIXブル2倍（1568）", "9433.T": "KDDI", "3042.T": "セキュアヴェイル"}
-WEIGHTS = {t: 1 / len(PT) for t in PT}  # 実際の金額が分かったら書き換える
+# 2026-10-09 21:46 の注文（数量 × 10/9 終値）。均等で見る場合は {t: 1 / len(PT) for t in PT}
+ORDER_QTY = {"4507.T": 2, "6954.T": 2, "5802.T": 5, "3778.T": 2, "1568.T": 10, "9433.T": 5, "3042.T": 10}
+ORDER_PX = {"4507.T": 2744.5, "6954.T": 6103, "5802.T": 2360.5, "3778.T": 3775, "1568.T": 1018.5, "9433.T": 2893, "3042.T": 581}
+_amt = {t: ORDER_QTY[t] * ORDER_PX[t] for t in PT}
+WEIGHTS = {t: _amt[t] / sum(_amt.values()) for t in PT}
+LABEL = "このポートフォリオ（注文どおり）"
 REF = {"1306.T": "TOPIX", "^N225": "日経平均"}
 PLAN = {"1475.T": 22557, "1655.T": 15979, "9433.T": 2893, "9020.T": 3376, "4452.T": 3557}  # 運用計画 v1.2（現金を除く）
 AN = 250
@@ -61,7 +66,7 @@ def main():
     pr = port(X, w)
     pw = np.array(list(PLAN.values()), float); pw /= pw.sum()
     plan_r = port(R[list(PLAN)].dropna().reindex(X.index).dropna(), pw)
-    series = {"このポートフォリオ（均等）": pr, "TOPIX": tpx, "日経平均": R["^N225"].reindex(X.index), "運用計画v1.2": plan_r}
+    series = {LABEL: pr, "TOPIX": tpx, "日経平均": R["^N225"].reindex(X.index), "運用計画v1.2": plan_r}
     def stats(r):
         r = r.dropna(); nav = (1 + r).cumprod(); mo = (1 + r).groupby(r.index.to_period("M")).prod() - 1
         return {"年率リターン": float(nav.iloc[-1] ** (AN / len(r)) - 1), "年率ボラ": float(r.std() * np.sqrt(AN)), "シャープ比": float(r.mean() / r.std() * np.sqrt(AN)),
@@ -90,12 +95,13 @@ def main():
     for tgt in np.linspace(float(w_mv @ mu), float(mu.max()), 30):
         ww = solve(Cf, mu, target=tgt); pts.append({"ret": float(ww @ mu), "vol": float(np.sqrt(ww @ Cf @ ww)), "w": ww.round(4).tolist()})
     fr = {"points": pts, "assets": [{"name": PT[t], "ret": float(mu[i]), "vol": float(np.sqrt(Cf[i, i]))} for i, t in enumerate(PT)],
-          "port": {k: {"ret": float(v @ mu), "vol": float(np.sqrt(v @ Cf @ v)), "w": v.round(4).tolist()} for k, v in [("このポートフォリオ（均等）", w), ("最大シャープ", w_ms), ("最小分散", w_mv)]}}
+          "port": {k: {"ret": float(v @ mu), "vol": float(np.sqrt(v @ Cf @ v)), "w": v.round(4).tolist()} for k, v in [(LABEL, w), ("最大シャープ", w_ms), ("最小分散", w_mv)]}}
     navw = pd.DataFrame({k: (1 + v.dropna()).cumprod() for k, v in series.items()}).resample("W-FRI").last()
     res = {"names": [PT[t] for t in PT], "keys": list(PT), "assets": rows, "summary": summ, "rc": rc.round(4).tolist(), "corr": corr.round(3).tolist(),
            "stress": stress, "lev": lev, "frontier": fr, "period": [str(X.index[0].date()), str(X.index[-1].date())],
            "nav": {"dates": [d.strftime("%Y-%m-%d") for d in navw.index], **{k: [None if pd.isna(x) else round(float(x), 4) for x in navw[k]] for k in navw}},
-           "eff_beta_from_lev": float(WEIGHTS["1568.T"] * rows[list(PT).index("1568.T")]["beta"])}
+           "eff_beta_from_lev": float(WEIGHTS["1568.T"] * rows[list(PT).index("1568.T")]["beta"]),
+           "label": LABEL, "amounts": {t: _amt[t] for t in PT}, "qty": ORDER_QTY, "total": sum(_amt.values())}
     json.dump(res, open(OUT / "results.json", "w"), ensure_ascii=False)
 
     pd.set_option("display.width", 220)

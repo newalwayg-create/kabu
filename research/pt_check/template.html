@@ -68,9 +68,9 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">ポートフォリオ診断 ／ 7銘柄・均等配分の場合</div>
+    <div class="eyebrow">ポートフォリオ診断 ／ 7銘柄・注文どおりの比率（10/9 21:46 の注文）</div>
     <h1>リターンは高いが、リスクも同じだけ大きい。効率はTOPIXとほぼ同じ</h1>
-    <p>7銘柄に同じ金額ずつ（各 1/7）投資し、毎月末に比率を戻した場合を、2019年以降のデータで検証しました。TPレバレッジダブルは、TOPIXの2倍の値動きをするETFのうち最も売買の多い 1568（TOPIXブル2倍上場投信）として計算しています。</p>
+    <p>SBI証券の注文照会の数量（10/9 の終値で金額換算）の比率で7銘柄を持ち、毎月末に比率を戻した場合を、2019年以降のデータで検証しました。TPレバレッジダブルは 1568（TOPIXブル2倍上場投信）です。</p>
     <div class="holdings" id="holdings"></div>
   </header>
 
@@ -88,9 +88,9 @@ footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--lin
 
   <section>
     <div class="sec-head"><h2>リスクはどこから来ているか</h2>
-      <p>金額は均等でも、値動きの大きさと銘柄どうしの連動が違うため、リスクの出どころは均等になりません。左はリスク寄与（ポートフォリオ全体の値動きのうち、各銘柄が占める割合）、右は銘柄どうしの相関です。</p></div>
+      <p>値動きの大きさと銘柄どうしの連動が違うため、リスクの出どころは投資額の比率どおりにはなりません。左はリスク寄与（ポートフォリオ全体の値動きのうち、各銘柄が占める割合）、右は銘柄どうしの相関です。</p></div>
     <div class="two">
-      <div class="panel"><span class="panel-title">リスク寄与（直近2年の値動きから）</span><div class="chart" id="c-rc"></div><p class="note">赤は投資額の比率（点線）より大きくリスクを持っている銘柄、青は小さい銘柄です。</p></div>
+      <div class="panel"><span class="panel-title">リスク寄与（直近2年の値動きから）</span><div class="chart" id="c-rc"></div><p class="note">赤は投資額の比率（黒い縦線）より大きくリスクを持っている銘柄、青は小さい銘柄です。</p></div>
       <div class="panel"><span class="panel-title">日次リターンの相関（2019年以降）</span><div class="chart" id="c-corr"></div></div>
     </div>
   </section>
@@ -147,8 +147,8 @@ const hideTip = () => tip.hidden = true;
 function bind(n, html) { n.addEventListener("pointermove", e => showTip(e, typeof html === "function" ? html(e) : html)); n.addEventListener("pointerleave", hideTip); }
 function table(id, head, rows, hl = []) { document.getElementById(id).innerHTML = `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r, i) => `<tr class="${hl.includes(i) ? "hl" : ""}">${r.map((c, j) => `<td class="${j ? "n" : ""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`; }
 function mix(a, b, t) { const p = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); const A = p(a), B = p(b); return "rgb(" + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",") + ")"; }
-const N = D.names, S = D.summary, PT = "このポートフォリオ（均等）";
-document.getElementById("holdings").innerHTML = D.assets.map(a => `<span>${a.name}　${pc(a.weight, 1)}</span>`).join("");
+const N = D.names, S = D.summary, PT = D.label;
+document.getElementById("holdings").innerHTML = D.assets.map(a => `<span>${a.name}　${D.qty[a.key]}${a.key === "1568.T" ? "口" : "株"}・${Math.round(D.amounts[a.key]).toLocaleString()}円（${pc(a.weight, 1)}）</span>`).join("") + `<span><b>合計 ${Math.round(D.total).toLocaleString()}円</b></span>`;
 
 // ---------- verdicts ----------
 const rc = D.rc.map((v, i) => [N[i], v]).sort((a, b) => b[1] - a[1]);
@@ -158,7 +158,7 @@ const V = [
   [S[PT]["シャープ比"].toFixed(2), "シャープ比", `TOPIX（${S.TOPIX["シャープ比"].toFixed(2)}）とほぼ同じ効率です。年率リターン ${pc(S[PT]["年率リターン"])} は TOPIX（${pc(S.TOPIX["年率リターン"])}）より高い一方、値動き（年率 ${pc(S[PT]["年率ボラ"])}）も TOPIX（${pc(S.TOPIX["年率ボラ"])}）より大きく、リスクを増やした分だけリターンが増えた形です。`],
   [sg(S[PT]["最大下落"], 0), "最大下落", `高値から最大で約4割下げた期間があります（TOPIX は ${sg(S.TOPIX["最大下落"], 0)}）。コロナショックでは ${sg(st["コロナショック（2020/2/20〜3/16）"][PT], 0)}、2025年4月の関税ショックでは ${sg(st["2025年4月の関税ショック（3/27〜4/7）"][PT], 0)} で、いずれも TOPIX より深く下げました。`],
   [pc(top3, 0), "上位3銘柄のリスク寄与", `${rc.slice(0, 3).map(r => r[0]).join("・")}の3銘柄で、全体の値動きの約${Math.round(top3 * 10) * 10}%を占めます。KDDI と塩野義は合わせて ${pc(rc.filter(r => r[0] === "KDDI" || r[0] === "塩野義製薬").reduce((a, b) => a + b[1], 0), 0)} で、守りの役割は小さくなっています。`],
-  [`β ${S[PT]["TOPIXに対するβ"].toFixed(2)}`, "TOPIXに対する感応度", `TOPIXブル2倍（β ${D.assets.find(a => a.key === "1568.T").beta.toFixed(2)}）が1/7入っているため、全体として TOPIX より少し大きく動きます。1568 は値動きの荒い年に「TOPIXの2倍」に届かない目減りがあります（2024年: TOPIX の2倍 +40.6% に対して +31.7%）。`],
+  [`β ${S[PT]["TOPIXに対するβ"].toFixed(2)}`, "TOPIXに対する感応度", `TOPIXブル2倍（β ${D.assets.find(a => a.key === "1568.T").beta.toFixed(2)}）が ${pc(D.assets.find(a => a.key === "1568.T").weight, 0)} 入っているため、全体として TOPIX より少し大きく動きます。1568 は値動きの荒い年に「TOPIXの2倍」に届かない目減りがあります（2024年: TOPIX の2倍 +40.6% に対して +31.7%）。`],
 ];
 document.getElementById("board").innerHTML = V.map(([v, u, p]) => `<div class="verdict"><div class="big">${v}<small>${u}</small></div><p>${p}</p></div>`).join("");
 
@@ -188,14 +188,13 @@ function rcChart() {
   const host = document.getElementById("c-rc"), rows = rc, w = 420, rh = 30, L = 150, R = 50, T = 22, h = T + rows.length * rh + 22, xs = v => L + v / 0.3 * (w - L - R);
   const s = svg(w, h, host);
   for (const v of [0, .1, .2, .3]) { el("line", {x1: xs(v), x2: xs(v), y1: T, y2: h - 20, stroke: v === 0 ? css("--muted") : css("--grid")}, s); txt(s, xs(v), h - 4, v * 100 + "%", {"text-anchor": "middle", fill: css("--muted"), "font-size": 10, ...mono}); }
-  const eq = 1 / rows.length;
-  rows.forEach(([n, v], i) => { const y = T + i * rh;
+  rows.forEach(([n, v], i) => { const y = T + i * rh, wt = D.assets.find(a => a.name === n).weight;
     txt(s, L - 8, y + rh / 2 + 4, n, {"text-anchor": "end", fill: css("--ink"), "font-size": 11.5});
-    el("rect", {x: xs(0), y: y + 7, width: Math.max(1, xs(v) - xs(0)), height: rh - 14, rx: 3, fill: v > eq ? css("--pt") : css("--c1")}, s);
-    txt(s, xs(v) + 5, y + rh / 2 + 4, pc(v, 1), {fill: css("--ink-2"), "font-size": 10.5, ...mono});
-    bind(el("rect", {x: 0, y, width: w, height: rh, fill: "transparent"}, s), `<b>${n}</b><br><span class="k">リスク寄与</span> <span class="v">${pc(v, 1)}</span><br><span class="k">投資額の比率</span> <span class="v">${pc(eq, 1)}</span>`); });
-  el("line", {x1: xs(eq), x2: xs(eq), y1: T, y2: h - 20, stroke: css("--ink"), "stroke-dasharray": "3 3"}, s);
-  txt(s, xs(eq), T - 8, "投資額の比率 14.3%", {"text-anchor": "middle", fill: css("--ink-2"), "font-size": 10});
+    el("rect", {x: xs(0), y: y + 7, width: Math.max(1, xs(v) - xs(0)), height: rh - 14, rx: 3, fill: v > wt ? css("--pt") : css("--c1")}, s);
+    el("line", {x1: xs(wt), x2: xs(wt), y1: y + 3, y2: y + rh - 3, stroke: css("--ink"), "stroke-width": 2}, s);
+    txt(s, Math.max(xs(v), xs(wt)) + 6, y + rh / 2 + 4, pc(v, 1), {fill: css("--ink-2"), "font-size": 10.5, ...mono});
+    bind(el("rect", {x: 0, y, width: w, height: rh, fill: "transparent"}, s), `<b>${n}</b><br><span class="k">リスク寄与</span> <span class="v">${pc(v, 1)}</span><br><span class="k">投資額の比率</span> <span class="v">${pc(wt, 1)}</span>`); });
+  txt(s, L, T - 8, "棒＝リスク寄与、黒い縦線＝投資額の比率", {fill: css("--ink-2"), "font-size": 10});
 }
 
 // ---------- correlation ----------
