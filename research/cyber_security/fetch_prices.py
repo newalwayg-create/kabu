@@ -19,7 +19,8 @@ import pandas as pd
 
 JST = timezone(timedelta(hours=9))
 START = "2026-10-01"
-END = "2026-10-13"
+import os
+END = os.environ.get("END_DATE", "2026-10-09")  # 10/12は祝日休場。10/13は場中のため確定終値の10/9を使用
 THRESHOLD = 5.0  # %
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "data"
@@ -85,17 +86,20 @@ def main() -> None:
         win = df.loc[pd.Timestamp(START).date():pd.Timestamp(END).date()]
         o = win["open"].iloc[0]
         c = win["close"].iloc[-1]
+        live = df["close"].iloc[-1] if df.index[-1] > win.index[-1] else float("nan")
         start_close_prev = df.loc[:pd.Timestamp(START).date()]["close"].iloc[-2]
         rows.append({
             "code": code, "name": name, "rank": rank,
             "first_date": win.index[0], "last_date": win.index[-1],
-            "open_1001": o, "close_1013": c,
+            "open_1001": o, "close_end": c,
             "ret_pct": (c / o - 1) * 100,
             "high_in_window": win["high"].max(),
             "max_runup_pct": (win["high"].max() / o - 1) * 100,
             "from_high_pct": (c / win["high"].max() - 1) * 100,
             "prev_close_0930": start_close_prev,
             "gap_1001_pct": (o / start_close_prev - 1) * 100,
+            "px_1013_intraday": live,
+            "ret_to_1013_intraday_pct": (live / o - 1) * 100,
             "ret_since_0901_pct": (c / df.loc[pd.Timestamp("2026-09-01").date():]["open"].iloc[0] - 1) * 100,
             "ret_0701_0930_pct": (start_close_prev / df.loc[pd.Timestamp("2026-07-01").date():]["open"].iloc[0] - 1) * 100,
             "turnover_window_oku": (win["close"] * win["volume"]).sum() / 1e8,
@@ -114,8 +118,8 @@ def main() -> None:
     r["vs_topix_pt"] = r["ret_pct"] - topix
     r.to_csv(OUT / "step2_returns.csv", index=False, float_format="%.2f")
     pd.set_option("display.width", 250)
-    print(r[["code", "name", "rank", "first_date", "last_date", "open_1001", "close_1013",
-             "ret_pct", "ret_since_0901_pct", "ret_0701_0930_pct", "gap_1001_pct", "max_runup_pct", "from_high_pct", "vs_n225_pt", "vs_topix_pt",
+    print(r[["code", "name", "rank", "first_date", "last_date", "open_1001", "close_end",
+             "ret_pct", "ret_since_0901_pct", "ret_0701_0930_pct", "gap_1001_pct", "max_runup_pct", "from_high_pct", "vs_n225_pt", "vs_topix_pt", "ret_to_1013_intraday_pct",
              "turnover_window_oku", "turnover_prev_window_oku", "class"]]
           .to_string(float_format=lambda v: f"{v:.2f}"))
 
