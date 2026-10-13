@@ -7,3 +7,4 @@ output_demo/
 research/ma_rebound/data/prices.csv
 research/ma_rebound/*.log
 research/ma_rebound/data/*/events.csv
+research/ma_rebound_v2/data/prices.csv
