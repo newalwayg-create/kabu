@@ -40,7 +40,7 @@ def run_setting(prices, idx, s, m, l, k, tag, title) -> pd.DataFrame:
                                                         月数=("month", "nunique"))
     occ["全日に占める%"] = occ["延べ日数"] / len(base) * 100
     occ = occ.reindex(GROUP_ORDER)
-    out.append("## 1-2. 各グループの発生回数（5/25/75日線, 傾き20日）\n\n" +
+    out.append(f"## 1-2. 各グループの発生回数（{s}/{m}/{l}日線, 傾き{k}日）\n\n" +
                f"全日（条件なし）: 延べ {len(base):,} 日, {base.code.nunique()} 銘柄, "
                f"{base.date.min().date()} 〜 {base.date.max().date()}\n\n" + md(occ, ".1f"))
 
