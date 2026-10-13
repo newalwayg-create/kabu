@@ -114,7 +114,7 @@ def gallery(tag: str, mas: tuple, title: str) -> None:
         items = []
         for kind, part in (("上昇", good), ("下落", bad)):
             for r in part.itertuples():
-                fn = f"{tag}_{gi:02d}_{kind}_{r.code}_{r.date.date()}.png"
+                fn = f"{tag}_{gi:02d}_{"up" if kind == "上昇" else "down"}_{r.code}_{r.date.date()}.png"
                 t = f"{r.code} {r.name} {r.date.date()}  {g}  20日後 {r.ret20*100:+.1f}%"
                 draw(prices[r.code], r.date, mas, t, cdir / fn)
                 cap = (f"<b>{kind}</b> {html.escape(str(r.code))} {html.escape(r.name)} {r.date.date()}<br>"
