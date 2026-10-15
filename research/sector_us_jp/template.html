@@ -1,0 +1,183 @@
+<title>米国業種と東証33業種</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: header with three findings, then one 33x12 diverging heatmap with a view toggle (sector-specific / next close / next open / after open), then the strongest pairs list and a table view */
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14161a; --ink-2: #474c56; --muted: #757b87; --line: #dfe2e7; --grid: #eceef1;
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100; --c5: #e87ba4; --c6: #008300; --c7: #4a3aa7; --other: #c9ccd2;
+  --neg: #2a78d6; --mid: #f0efec; --pos: #e34948;
+  --good: #0ca30c; --warn: #fab219; --bad: #d03b3b; --none: #8a8f99;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111317; --surface: #1a1c21; --ink: #f1f2f4; --ink-2: #c3c7cf; --muted: #8d93a0; --line: #2c3038; --grid: #24272e;
+    --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --other: #4a4e57;
+    --neg: #3987e5; --mid: #383835; --pos: #e66767; --good: #2fbf2f; --warn: #fab219; --bad: #e66767; --none: #8d93a0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111317; --surface: #1a1c21; --ink: #f1f2f4; --ink-2: #c3c7cf; --muted: #8d93a0; --line: #2c3038; --grid: #24272e;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --other: #4a4e57;
+  --neg: #3987e5; --mid: #383835; --pos: #e66767; --good: #2fbf2f; --warn: #fab219; --bad: #e66767; --none: #8d93a0; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.7; }
+.wrap { max-width: 1060px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 36px 72px; display: grid; gap: 40px; }
+h1 { font-size: clamp(26px, 4.4vw, 36px); font-weight: 900; margin: 0; line-height: 1.3; text-wrap: balance; }
+h2 { font-size: 21px; font-weight: 700; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 72ch; color: var(--ink-2); }
+header { display: grid; gap: 12px; }
+.eyebrow { font-size: 12px; color: var(--muted); letter-spacing: .12em; }
+.finds { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.find { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.find b { font-size: 14.5px; }
+.find span { font-size: 13.5px; color: var(--ink-2); line-height: 1.65; }
+section { display: grid; gap: 14px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; }
+.toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; gap: 2px; flex-wrap: wrap; }
+.toggle button { font: inherit; font-size: 12.5px; border: 0; background: transparent; color: var(--ink-2); padding: 3px 12px; border-radius: 999px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--c1); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-2); align-items: center; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+.desc { font-size: 13.5px; color: var(--ink-2); min-height: 2.6em; }
+.scroll { overflow-x: auto; }
+.scroll svg { display: block; min-width: 700px; width: 100%; height: auto; }
+.note { font-size: 12.5px; color: var(--muted); line-height: 1.65; }
+.pairs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+table { border-collapse: collapse; font-size: 13px; width: 100%; }
+th, td { padding: 5px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 500; color: var(--muted); font-size: 12px; }
+td.n { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+details { border-top: 1px solid var(--line); padding-top: 8px; }
+summary { cursor: pointer; font-size: 12.5px; color: var(--muted); width: fit-content; }
+.tip { position: fixed; pointer-events: none; z-index: 10; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.55; box-shadow: 0 6px 18px rgba(0,0,0,.12); max-width: 320px; }
+.tip .k { color: var(--muted); } .tip .v { font-family: var(--font-data); }
+footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 4px; }
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">米国の業種 → 翌日の東証33業種</div>
+  <h1>米国の業種が動いた翌日、日本のどの業種がつられるか</h1>
+  <p>S&amp;P500の11業種（セクターETF）と半導体（SMH）の値動きを、翌営業日の東証33業種（代表銘柄の時価総額加重）と比べました。期間は <b id="per"></b>。</p>
+  <div class="finds">
+    <div class="find"><b>つながりは事業どおり</b><span>エネルギー→鉱業・石油、情報技術と半導体→電気機器、生活必需品→食料品、ヘルスケア→医薬品、公益→電気・ガス、金融→保険・銀行。2019〜23年と2024年以降の両方で同じ向き。</span></div>
+    <div class="find"><b>反対に動く組もある</b><span>米国で半導体が市場より強い夜の翌日、日本の陸運・食料品・電気ガス・水産は市場より弱い（逆も同じ）。資金が守りと攻めの間を行き来する動き。</span></div>
+    <div class="find"><b>寄り付きで終わる</b><span>連動は翌朝の寄り付きで出尽くし、寄り付きから引けまでの相関はすべて −0.16〜+0.03。わずかに逆向きで、寄り付きが行き過ぎて少し戻る程度。</span></div>
+  </div>
+</header>
+
+<section>
+  <h2>33業種 × 米国12業種</h2>
+  <div class="panel">
+    <div class="bar">
+      <div class="toggle" role="group" aria-label="表示する相関">
+        <button id="v-excess" aria-pressed="true">業種固有の連動</button>
+        <button id="v-day" aria-pressed="false">翌日の終値</button>
+        <button id="v-gap" aria-pressed="false">翌朝の寄り付き</button>
+        <button id="v-oc" aria-pressed="false">寄り付き→引け</button>
+      </div>
+      <div class="legend"><span><i class="sw" style="background:var(--neg)"></i>−0.5以下</span><span><i class="sw" style="background:var(--mid);outline:1px solid var(--line)"></i>0</span><span><i class="sw" style="background:var(--pos)"></i>+0.5以上</span><span>（相関係数）</span></div>
+    </div>
+    <div class="desc" id="desc"></div>
+    <div class="scroll"><div id="hm"></div></div>
+    <div class="note">列の見出しをクリックすると、その米国業種との相関が強い順に日本の業種を並べ替えます。もう一度押すと元の順に戻ります。枠線は、2019〜23年と2024年以降の両方で同じ向きに ±0.15 以上だった組です（業種固有の連動のみ）。</div>
+    <details><summary>表で見る</summary><div class="scroll" id="tbl"></div></details>
+  </div>
+</section>
+
+<section>
+  <h2>業種固有の連動が強い組</h2>
+  <div class="pairs">
+    <div class="panel"><b>同じ向き</b><div class="scroll" id="pos"></div></div>
+    <div class="panel"><b>反対向き</b><div class="scroll" id="neg"></div></div>
+  </div>
+  <p class="note">「業種固有」は、米国は業種ETFからS&amp;P500を、日本は業種からTOPIX（1306）を差し引いた超過リターン同士の相関です。市場全体がまとめて動いた分を除いて、その業種ならではのつながりだけを見ています。</p>
+</section>
+
+<section>
+  <h2>使い方</h2>
+  <p>翌朝、持っている銘柄の業種がどちらに寄り付きそうかを知る目安にはなります。ただし、寄り付きから先の動きは予想できません。夜の米国を見てから朝に売買しても、つながりの分はすでに値段に入っています。</p>
+</section>
+
+<footer>
+  <div>データ: Yahoo Finance（米国セクターETF、S&amp;P500、東証33業種の代表161銘柄、TOPIX連動ETF 1306）。米国の t 日の値動きを東京の t+1 日に合わせています。</div>
+  <div>プログラム: research/sector_us_jp/analyze.py, export.py</div>
+</footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+<script>
+const D = /*DATA*/;
+const NS = "http://www.w3.org/2000/svg";
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const sg = (v, d = 2) => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(d);
+function el(tag, a = {}, p) { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); if (p) p.appendChild(e); return e; }
+function txt(p, x, y, s, a = {}) { const t = el("text", {x, y, fill: css("--ink-2"), "font-size": 11, "font-family": "Zen Kaku Gothic New, sans-serif", ...a}, p); t.textContent = s; return t; }
+const mono = {"font-family": "IBM Plex Mono, monospace"};
+const tip = document.getElementById("tip");
+function showTip(e, html) { tip.innerHTML = html; tip.hidden = false; const r = tip.getBoundingClientRect(); let x = e.clientX + 14, y = e.clientY + 14; if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14; tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px"; }
+const hideTip = () => tip.hidden = true;
+function mix(a, b, t) { const p = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); const A = p(a), B = p(b); return "rgb(" + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",") + ")"; }
+const CAP = 0.5;
+function div(v) { const t = Math.min(1, Math.abs(v) / CAP); return v >= 0 ? mix(css("--mid"), css("--pos"), t) : mix(css("--mid"), css("--neg"), t); }
+const inkOn = v => Math.abs(v) / CAP > .6 ? "#fff" : css("--ink");
+const DESC = {
+  excess: "米国の業種がS&P500より強かった（弱かった）夜の翌日、日本の業種がTOPIXより強かった（弱かった）か。市場全体の動きを除いた、業種どうしのつながりです。",
+  day: "米国の業種の値動きと、翌日の日本の業種の値動き（前日の終値から終値まで）の相関。市場全体がまとめて動く分が入るため、どの組もプラスになります。",
+  gap: "米国の業種の値動きと、翌朝の日本の業種の寄り付き（前日の終値から始値まで）の相関。つながりの大部分はここに出ます。",
+  oc: "米国の業種の値動きと、翌日の日本の業種の寄り付きから引けまでの値動きの相関。ほぼゼロで、寄り付き後の動きは予想できません。"
+};
+const robust = (i, j) => { const a = D.excess_is[i][j], b = D.excess_oos[i][j]; return a != null && b != null && Math.sign(a) === Math.sign(b) && Math.abs(a) >= .15 && Math.abs(b) >= .15; };
+let view = "excess", sortCol = null;
+function draw() {
+  const M = D[view], U = D.us, J = D.jp;
+  let rows = J.map((s, k) => k);
+  if (sortCol != null) rows.sort((a, b) => (M[sortCol][b] ?? -9) - (M[sortCol][a] ?? -9));
+  const L = 130, T = 64, cw = 62, ch = 22, W = L + U.length * cw + 8, H = T + J.length * ch + 8;
+  const host = document.getElementById("hm"); host.innerHTML = "";
+  const s = el("svg", {viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "米国業種と東証33業種の相関ヒートマップ"}, host);
+  U.forEach((u, j) => {
+    const g = el("g", {style: "cursor:pointer", tabindex: 0, role: "button", "aria-label": u + "で並べ替え"}, s);
+    const x = L + j * cw + cw / 2;
+    const parts = u.includes("（") ? [u.slice(0, u.indexOf("（")), u.slice(u.indexOf("（"))] : [u];
+    parts.forEach((p, k) => txt(g, x, T - 34 + k * 14 + (parts.length === 1 ? 7 : 0), p, {"text-anchor": "middle", fill: sortCol === j ? css("--ink") : css("--ink-2"), "font-weight": sortCol === j ? 700 : 400}));
+    txt(g, x, T - 6, D.us_keys[j], {"text-anchor": "middle", fill: css("--muted"), "font-size": 10, ...mono});
+    el("rect", {x: L + j * cw, y: 0, width: cw, height: T, fill: "transparent"}, g);
+    const act = () => { sortCol = sortCol === j ? null : j; draw(); };
+    g.addEventListener("click", act); g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); } });
+  });
+  rows.forEach((k, i) => {
+    const y = T + i * ch;
+    txt(s, L - 8, y + ch / 2 + 4, J[k], {"text-anchor": "end", fill: css("--ink"), "font-size": 11.5});
+    U.forEach((u, j) => {
+      const v = M[j][k], x = L + j * cw;
+      const rb = view === "excess" && robust(j, k);
+      const r = el("rect", {x: x + 1, y: y + 1, width: cw - 2, height: ch - 2, rx: 3, fill: v == null ? css("--grid") : div(v), stroke: rb ? css("--ink") : "none", "stroke-width": rb ? 1.4 : 0}, s);
+      if (v != null && Math.abs(v) >= .15) txt(s, x + cw / 2, y + ch / 2 + 4, sg(v), {"text-anchor": "middle", fill: inkOn(v), "font-size": 10.5, ...mono, "pointer-events": "none"});
+      r.addEventListener("pointermove", e => showTip(e, `<b>${u} → ${J[k]}</b><br>` +
+        `<span class="k">業種固有の連動</span> <span class="v">${sg(D.excess[j][k])}</span>（2019-23 <span class="v">${sg(D.excess_is[j][k])}</span> / 2024- <span class="v">${sg(D.excess_oos[j][k])}</span>）<br>` +
+        `<span class="k">翌日の終値</span> <span class="v">${sg(D.day[j][k])}</span><br><span class="k">翌朝の寄り付き</span> <span class="v">${sg(D.gap[j][k])}</span><br><span class="k">寄り付き→引け</span> <span class="v">${sg(D.oc[j][k])}</span>`));
+      r.addEventListener("pointerleave", hideTip);
+    });
+  });
+  document.getElementById("desc").textContent = DESC[view];
+  document.getElementById("tbl").innerHTML = `<table><thead><tr><th>日本の業種</th>${U.map(u => `<th>${u}</th>`).join("")}</tr></thead><tbody>${rows.map(k => `<tr><td>${J[k]}</td>${U.map((u, j) => `<td class="n">${sg(M[j][k])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+["excess", "day", "gap", "oc"].forEach(v => document.getElementById("v-" + v).addEventListener("click", () => { view = v; ["excess", "day", "gap", "oc"].forEach(x => document.getElementById("v-" + x).setAttribute("aria-pressed", x === v)); draw(); }));
+document.getElementById("per").textContent = D.period[0].replaceAll("-", "/") + " 〜 " + D.period[1].replaceAll("-", "/");
+const all = []; D.us.forEach((u, j) => D.jp.forEach((s, k) => all.push({u, s, v: D.excess[j][k], a: D.excess_is[j][k], b: D.excess_oos[j][k], g: D.gap[j][k]})));
+const list = (arr, id) => document.getElementById(id).innerHTML = `<table><thead><tr><th>米国 → 日本</th><th>全期間</th><th>2019-23</th><th>2024-</th><th>寄り付き</th></tr></thead><tbody>${arr.map(r => `<tr><td>${r.u} → ${r.s}</td><td class="n">${sg(r.v)}</td><td class="n">${sg(r.a)}</td><td class="n">${sg(r.b)}</td><td class="n">${sg(r.g)}</td></tr>`).join("")}</tbody></table>`;
+const ok = r => r.v != null && r.a != null && r.b != null && Math.sign(r.a) === Math.sign(r.b);
+list(all.filter(ok).sort((a, b) => b.v - a.v).slice(0, 12), "pos");
+list(all.filter(ok).sort((a, b) => a.v - b.v).slice(0, 12), "neg");
+draw();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+</script>
