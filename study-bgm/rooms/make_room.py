@@ -396,17 +396,19 @@ SEG_SEC = 60
 
 
 def make_video(out, name, wav, length):
+    # 2 時間を超える動画は、そのまま送れる大きさ (400MB 未満) に収めるため少し圧縮を強める
+    crf, abr = ("30", "160k") if length > 2 * 3600 else ("26", "192k")
     seg = out / "_still.mp4"
     # 静止画なので、キーフレームは区切り (60 秒) ごとに 1 枚だけにしてファイルを小さくする
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", "24", "-t", str(SEG_SEC),
                     "-i", str(out / "video_still.png"), "-c:v", "libx264", "-tune", "stillimage",
-                    "-crf", "26", "-g", str(SEG_SEC * 24), "-pix_fmt", "yuv420p", "-r", "24", str(seg)], check=True)
+                    "-crf", crf, "-g", str(SEG_SEC * 24), "-pix_fmt", "yuv420p", "-r", "24", str(seg)], check=True)
     # 区切りの静止画動画を必要な回数だけ繰り返し、音声の長さで切る
     # (-stream_loop -1 と -shortest の組み合わせは映像のコピー時に止まらないことがある)
     loops = int(np.ceil(length / SEG_SEC)) + 1
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-stream_loop", str(loops), "-i", str(seg),
                     "-i", str(wav), "-map", "0:v", "-map", "1:a", "-c:v", "copy",
-                    "-c:a", "aac", "-b:a", "192k", "-t", f"{length:.3f}", "-movflags", "+faststart",
+                    "-c:a", "aac", "-b:a", abr, "-t", f"{length:.3f}", "-movflags", "+faststart",
                     str(out / f"{name}.mp4")], check=True)
     seg.unlink()
 
