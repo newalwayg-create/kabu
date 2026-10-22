@@ -4,3 +4,6 @@ __pycache__/
 data/
 
 output_demo/
+
+# 30分版のWAVはGitHubの100MB制限を超えるため除外
+study-bgm/ocean_long.wav
