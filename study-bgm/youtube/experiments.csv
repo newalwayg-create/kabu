@@ -1,0 +1,9 @@
+id,hypothesis,video,variant_a,variant_b,variant_c,metric,start_date,end_date,result_a,result_b,result_c,status,learning
+H1,"New channel: brand+keyword title (B) is found more than one-word title (A)",ocean_long,T1 x B,T5 x A,,"impressions; search traffic share; watch time share",,,,,,planned,
+H2,"Scene thumbnail (T1) beats flat gradient (T5)",ocean_long,T1 x B,T5 x B,,"watch time share; CTR",,,,,,planned,
+H3,"Story/place name (C/T2) beats brand name (B/T1)",ocean_long,T1 x B,T2 x C,,watch time share,,,,,,planned,
+H4,"Bold text (T3) beats thin text (T1) at small sizes",next video,T1 x B,T3 x B,,"CTR from suggested",,,,,,planned,
+H5,"1h/3h versions earn more watch time per impression than 30 min",ocean 30m/1h/3h,30 min,1 h,3 h,"avg view duration; watch time per impression",,,,,,planned,
+H6,"Sleep version without sudden SFX keeps viewers longer",ocean 3h,SFX on,SFX soft,,retention curve,,,,,,planned,
+H7,"Consistent series (Ocean./Forest./...) grows suggested/browse traffic",series #3+,,,,"suggested+browse share; returning viewers",,,,,,planned,
+H8,"Translated titles/descriptions grow non-English traffic",all,before,after,,views by geography,,,,,,planned,
