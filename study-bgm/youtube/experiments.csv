@@ -7,3 +7,5 @@ H5,"1h/3h versions earn more watch time per impression than 30 min",ocean 30m/1h
 H6,"Sleep version without sudden SFX keeps viewers longer",ocean 3h,SFX on,SFX soft,,retention curve,,,,,,planned,
 H7,"Consistent series (Ocean./Forest./...) grows suggested/browse traffic",series #3+,,,,"suggested+browse share; returning viewers",,,,,,planned,
 H8,"Translated titles/descriptions grow non-English traffic",all,before,after,,views by geography,,,,,,planned,
+H12,"Channel trailer for non-subscribers raises subscribe rate from the channel page",channel,no trailer,trailer,,"subscribers from channel page / channel page views",,,,,,planned,
+H13,"Use-case words in playlist names increase playlist plays",channel,plain names,use-case names,,playlist watch time,,,,,,planned,

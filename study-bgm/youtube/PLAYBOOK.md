@@ -4,6 +4,7 @@
 **採用しなかった案・伸びなかった結果も消さずに残す。** 何が効かなかったかも資産になる。
 
 - サムネイル生成: `make_thumbnails.py`（`thumbnails/` と `preview_*.png` を出力）
+- チャンネル名・プロフィール画像・バナーなどの周辺設定: `CHANNEL.md`（`make_branding.py`）
 - 実験の記録: `experiments.csv`（1 実験 1 行。結論が出たら「学び」まで書く）
 
 ---
