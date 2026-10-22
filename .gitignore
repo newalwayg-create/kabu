@@ -7,3 +7,9 @@ output_demo/
 
 # 30分版のWAVはGitHubの100MB制限を超えるため除外
 study-bgm/ocean_long.wav
+
+# 1時間以上の音声・動画はGitHubの100MB制限を超えるため除外
+study-bgm/rooms/out/*/*.wav
+study-bgm/rooms/out/*/*.mp3
+study-bgm/rooms/out/*/*.mp4
+study-bgm/rooms/out/*/_*

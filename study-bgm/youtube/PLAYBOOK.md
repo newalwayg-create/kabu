@@ -6,6 +6,7 @@
 - サムネイル生成: `make_thumbnails.py`（`thumbnails/` と `preview_*.png` を出力）
 - チャンネル名・プロフィール画像・バナーなどの周辺設定: `CHANNEL.md`（`make_branding.py`）
 - 実験の記録: `experiments.csv`（1 実験 1 行。結論が出たら「学び」まで書く）
+- 動画の量産: `../rooms/`（`concepts.py` にコンセプトを 1 つ足して `python3 make_room.py <名前>`。曲・効果音・サムネイル 2 種・動画・説明文（`meta.md`）がまとめて `out/<名前>/` に出る）
 
 ---
 
