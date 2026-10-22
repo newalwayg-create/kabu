@@ -23,7 +23,7 @@ import pretty_midi
 from scipy.io import wavfile
 from scipy.signal import butter, sosfiltfilt
 
-from make_bgm import SR, render_wav
+from make_bgm import SR, add_note, render_wav
 from make_ocean import (CHORDS, DEEP_LOWPASS_HZ, SFX_BUBBLES, SFX_ENGINE,
                         SFX_REVERB, SFX_SLAPS, SFX_SONAR, SFX_WAVES,
                         SOUNDFONT, SURFACE_LOWPASS_HZ, VIBES_SCALE,
@@ -98,11 +98,12 @@ def build_midi(bpm, seed, transpose):
     choir = pretty_midi.Instrument(PROG_CHOIR, name="Choir")
     drone = pretty_midi.Instrument(PROG_DRONE, name="Drone")
 
+    last = {}
+
     def add(inst, pitch, start, dur, vel, jitter=hum):
         start = max(0.0, start + rng.uniform(-jitter, jitter))
         vel = int(np.clip(vel + rng.randint(-6, 6), 1, 127))
-        inst.notes.append(
-            pretty_midi.Note(vel, pitch + transpose, start, start + dur))
+        add_note(inst, pretty_midi.Note(vel, pitch + transpose, start, start + dur), last)
 
     def sprinkle(inst, t, voicing, counts, octave, vel, dur):
         # コードの構成音寄りに、まばらに音を置く

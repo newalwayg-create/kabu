@@ -87,6 +87,17 @@ SECTIONS = [
 MELODY_SCALE = [60, 62, 65, 67, 69, 72, 74, 77]
 
 
+def add_note(inst, note, last):
+    """ノートを追加する. 同じ楽器で同じ音が重なると前の音の「鳴り終わり」が後の音を
+    切ってしまうので、前の音を後の音の直前で終わらせる. last は楽器・音高ごとの直前のノート."""
+    key = (id(inst), note.pitch)
+    prev = last.get(key)
+    if prev is not None and prev.end > note.start - 0.01:
+        prev.end = max(prev.start + 0.05, note.start - 0.01)
+    inst.notes.append(note)
+    last[key] = note
+
+
 def build_midi(bpm, seed, transpose):
     rng = random.Random(seed)
     beat = 60.0 / bpm
@@ -99,11 +110,13 @@ def build_midi(bpm, seed, transpose):
     pad = pretty_midi.Instrument(PROG_PAD, name="Pad")
     drums = pretty_midi.Instrument(0, is_drum=True, name="Drums")
 
+    last = {}
+
     def add(inst, pitch, start, dur, vel, jitter=hum):
         start = max(0.0, start + rng.uniform(-jitter, jitter))
         vel = int(np.clip(vel + rng.randint(-7, 7), 1, 127))
         p = pitch if inst.is_drum else pitch + transpose
-        inst.notes.append(pretty_midi.Note(vel, p, start, start + dur))
+        add_note(inst, pretty_midi.Note(vel, p, start, start + dur), last)
 
     def swung(sixteenth):
         # 16 分音符位置 (0..15) をスウィングさせた拍位置 (秒) に

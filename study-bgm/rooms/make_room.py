@@ -27,7 +27,7 @@ from scipy.signal import butter, oaconvolve, sosfilt
 HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE.parent), str(HERE.parent / "youtube")]
 
-from make_bgm import SR  # noqa: E402
+from make_bgm import SR, add_note  # noqa: E402
 from make_ocean import bubble_cluster, pan  # noqa: E402
 from make_thumbnails import SANS_BOLD, SANS_LIGHT, SANS_MED, SERIF, draw_text  # noqa: E402
 
@@ -55,10 +55,12 @@ def build_midi(cfg, minutes, seed):
             insts[name] = pretty_midi.Instrument(cfg["parts"][name]["prog"], name=name)
         return insts[name]
 
+    last = {}
+
     def add(name, pitch, start, dur, vel, jitter=hum):
         start = max(0.0, start + rng.uniform(-jitter, jitter))
         vel = int(np.clip(vel + rng.randint(-6, 6), 1, 127))
-        inst(name).notes.append(pretty_midi.Note(vel, int(pitch), start, start + dur))
+        add_note(inst(name), pretty_midi.Note(vel, int(pitch), start, start + dur), last)
 
     total_w = sum(ch["weight"] for ch in cfg["chapters"])
     t = 0.0

@@ -21,7 +21,7 @@ import pretty_midi
 from scipy.io import wavfile
 from scipy.signal import butter
 
-from make_bgm import SR, circular_filter, render_wav
+from make_bgm import SR, add_note, circular_filter, render_wav
 
 # ---------------------------------------------------------------------------
 # パラメータ (ここを変えると雰囲気が変わる)
@@ -100,11 +100,12 @@ def build_midi(bpm, seed, transpose):
     vibes = pretty_midi.Instrument(PROG_VIBES, name="Vibraphone")
     choir = pretty_midi.Instrument(PROG_CHOIR, name="Choir")
 
+    last = {}
+
     def add(inst, pitch, start, dur, vel, jitter=hum):
         start = max(0.0, start + rng.uniform(-jitter, jitter))
         vel = int(np.clip(vel + rng.randint(-6, 6), 1, 127))
-        inst.notes.append(
-            pretty_midi.Note(vel, pitch + transpose, start, start + dur))
+        add_note(inst, pretty_midi.Note(vel, pitch + transpose, start, start + dur), last)
 
     t = 0.0
     depth_points = []  # (時刻, 深さ) の折れ線
