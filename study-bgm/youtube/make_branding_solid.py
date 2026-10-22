@@ -8,6 +8,7 @@
     branding_solid/avatar_<色>_dot.png    単色 + 中央に小さな点 (句点 = ひと休み)
     branding_solid/banner_<色>.png        単色のみ (2560x1440)
     branding_solid/banner_<色>_name.png   単色 + 安全領域内に小さくチャンネル名
+    branding_solid/watermark_sage.png     150x150 透過 PNG (アイコンと同じ sage の丸)  ← 採用
     branding_solid/watermark_dot.png      150x150 透過 PNG (点だけ)
     preview_solid.png                     ライト/ダークモードでの見え方、アイコンなし (既定の頭文字) との比較
 
@@ -59,10 +60,15 @@ def banner(rgb, name=None):
     return im
 
 
-def watermark():
+def watermark(rgb=None):
+    """透かし. rgb を渡すとアイコンと同じ色の丸 (明るい映像でも暗い映像でも見えるよう細い白縁つき)."""
     s = 150
     im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    ImageDraw.Draw(im).ellipse((s / 2 - 22, s / 2 - 22, s / 2 + 22, s / 2 + 22), fill=(255, 255, 255, 230))
+    d = ImageDraw.Draw(im)
+    if rgb is None:
+        d.ellipse((s / 2 - 22, s / 2 - 22, s / 2 + 22, s / 2 + 22), fill=(255, 255, 255, 230))
+    else:
+        d.ellipse((8, 8, s - 8, s - 8), fill=rgb + (255,), outline=(255, 255, 255, 200), width=3)
     return im
 
 
@@ -166,6 +172,7 @@ def main():
         banner(rgb).save(bdir / f"banner_{c}.png")
         banner(rgb, args.name).save(bdir / f"banner_{c}_name.png")
     watermark().save(bdir / "watermark_dot.png")
+    watermark(COLORS["sage"]).save(bdir / "watermark_sage.png")
     preview(args.name).save(OUT / "preview_solid.png")
     print(bdir, OUT / "preview_solid.png")
 
