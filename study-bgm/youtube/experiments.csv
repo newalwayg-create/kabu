@@ -9,3 +9,6 @@ H7,"Consistent series (Ocean./Forest./...) grows suggested/browse traffic",serie
 H8,"Translated titles/descriptions grow non-English traffic",all,before,after,,views by geography,,,,,,planned,
 H12,"Channel trailer for non-subscribers raises subscribe rate from the channel page",channel,no trailer,trailer,,"subscribers from channel page / channel page views",,,,,,planned,
 H13,"Use-case words in playlist names increase playlist plays",channel,plain names,use-case names,,playlist watch time,,,,,,planned,
+H4a,"Bold text (thumb_bold) beats thin serif (thumb_serif) at small sizes",rain (1h),thumb_serif x main title,thumb_bold x main title,,"watch time share; CTR from suggested",,,,,,planned,
+H3a,"Place/story name beats brand name (replication of H3)",snow (1h),thumb_serif x 'Snow. | ...',thumb_serif x 'A Cabin in the Snow | ...',,watch time share,,,,,,planned,
+H5a,"3h sleep version earns more watch time per impression than the 30-min original",ocean_sleep (3h) vs ocean_long (30m),30 min,3 h,,"avg view duration; watch time per impression",,,,,,planned,

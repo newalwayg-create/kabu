@@ -390,14 +390,21 @@ def make_images(cfg, out, seed):
     bold.save(out / "thumb_bold.png")
 
 
-def make_video(out, name, wav):
+SEG_SEC = 60
+
+
+def make_video(out, name, wav, length):
     seg = out / "_still.mp4"
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", "24", "-t", "10",
+    # 静止画なので、キーフレームは区切り (60 秒) ごとに 1 枚だけにしてファイルを小さくする
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", "24", "-t", str(SEG_SEC),
                     "-i", str(out / "video_still.png"), "-c:v", "libx264", "-tune", "stillimage",
-                    "-pix_fmt", "yuv420p", "-r", "24", str(seg)], check=True)
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-stream_loop", "-1", "-i", str(seg),
+                    "-crf", "26", "-g", str(SEG_SEC * 24), "-pix_fmt", "yuv420p", "-r", "24", str(seg)], check=True)
+    # 区切りの静止画動画を必要な回数だけ繰り返し、音声の長さで切る
+    # (-stream_loop -1 と -shortest の組み合わせは映像のコピー時に止まらないことがある)
+    loops = int(np.ceil(length / SEG_SEC)) + 1
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-stream_loop", str(loops), "-i", str(seg),
                     "-i", str(wav), "-map", "0:v", "-map", "1:a", "-c:v", "copy",
-                    "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart",
+                    "-c:a", "aac", "-b:a", "192k", "-t", f"{length:.3f}", "-movflags", "+faststart",
                     str(out / f"{name}.mp4")], check=True)
     seg.unlink()
 
@@ -425,6 +432,15 @@ def write_meta(cfg, out, chapters, length):
     (out / "meta.md").write_text("\n".join(lines), encoding="utf-8")
 
 
+def video_only(concept):
+    """音声は作り直さず、out/ にある WAV と静止画から MP4 だけ作る."""
+    out = HERE / "out" / concept
+    wav = out / f"{concept}.wav"
+    with wave.open(str(wav)) as w:
+        length = w.getnframes() / w.getframerate()
+    make_video(out, concept, wav, length)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawTextHelpFormatter)
@@ -432,7 +448,11 @@ def main():
     ap.add_argument("--minutes", type=float, help="長さを上書き (試し用)")
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--no-video", action="store_true")
+    ap.add_argument("--video-only", action="store_true", help="既存の WAV から MP4 だけ作る")
     args = ap.parse_args()
+    if args.video_only:
+        video_only(args.concept)
+        return
 
     cfg = CONCEPTS[args.concept]
     minutes = args.minutes or cfg["minutes"]
@@ -456,7 +476,7 @@ def main():
     make_images(cfg, out, args.seed)
     write_meta(cfg, out, chapters, length)
     if not args.no_video:
-        make_video(out, name, out / f"{name}.wav")
+        make_video(out, name, out / f"{name}.wav", length)
     print(f"done  {out}", flush=True)
 
 
