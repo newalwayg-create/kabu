@@ -181,7 +181,7 @@ FOCUS = dict(
     lead="When your head won't stop spinning — an hour of calm, steady music to settle in and focus.",
     use_line="Soft Rhodes, piano and a gentle beat for studying, deep work and reading.",
     credits="Original composition. Rhodes, soft piano, warm pads, bass and light drums.\n"
-            "No sudden sounds, no talking. Starts right away.",
+            "No talking. Starts right away.",
     tags="#studymusic #focusmusic #ambient",
     minutes=60,
     bpm=72,
