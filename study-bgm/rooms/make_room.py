@@ -405,7 +405,10 @@ def framed(path, w, h, color=SAGE):
 def make_images(cfg, out, seed):
     if cfg.get("image"):
         img = HERE.parent / cfg["image"]
-        framed(img, 1920, 1080).save(out / "video_still.png")
+        if cfg.get("still"):  # 動画の背景だけ別の 16:9 の絵にする場合
+            Image.open(HERE.parent / cfg["still"]).convert("RGB").resize((1920, 1080), Image.LANCZOS).save(out / "video_still.png")
+        else:
+            framed(img, 1920, 1080).save(out / "video_still.png")
         framed(img, 1280, 720).save(out / "thumb_main.png")
         for name, path in cfg.get("extra_thumbs", {}).items():
             Image.open(HERE.parent / path).convert("RGB").resize((1280, 720), Image.LANCZOS).save(out / f"thumb_{name}.png")

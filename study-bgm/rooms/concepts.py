@@ -172,7 +172,9 @@ FOCUS = dict(
     # 弱点を直した版. 0:00 から完成形の音で始め、見せ方は猫の画像 + 気持ち型タイトルにする.
     word="Focus.",
     image="youtube/assets/cat_tornado.png",          # sage の余白で正方形のまま使う
-    extra_thumbs={"vortex": "rooms/out/rain/thumb_cat_vortex.png"},
+    still="youtube/assets/window_cat.jpg",           # 動画の背景 (2026-10-25: 左右の緑の余白を避けて 16:9 の一枚絵に)
+    extra_thumbs={"vortex": "rooms/out/rain/thumb_cat_vortex.png",
+                  "window": "youtube/assets/window_cat.jpg"},
     title="when your head won't stop spinning | calm music to focus & study",
     alt_titles=[
         "Focus. | Soft Rhodes & Piano Music for Deep Work and Study (1 Hour)",

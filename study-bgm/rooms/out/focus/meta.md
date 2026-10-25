@@ -13,6 +13,7 @@
 
 - `thumb_main.png`
 - `thumb_vortex.png`
+- `thumb_window.png`
 
 ## Description
 
