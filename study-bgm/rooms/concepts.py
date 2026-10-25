@@ -14,6 +14,7 @@
 章の parts で "名前@late" と書くと、その章の後半だけ鳴る.
 dark は 0 = 明るい (こもらない) 〜 1 = 暗い (強くこもる) で、章の始め→終わりを指定する.
 """
+from make_bgm import CHORDS as LOFI_CHORDS
 from make_ocean import CHORDS as OCEAN_CHORDS
 from make_ocean import VIBES_SCALE as D_DORIAN
 
@@ -166,4 +167,48 @@ OCEAN_SLEEP = dict(
     fade_out=60,
 )
 
-CONCEPTS = {"rain": RAIN, "snow": SNOW, "ocean_sleep": OCEAN_SLEEP}
+FOCUS = dict(
+    # 2026-10-25: 最初の 4 本のデータ (クリック率 1.8%、平均視聴 3 分 14 秒) を受けて、
+    # 弱点を直した版. 0:00 から完成形の音で始め、見せ方は猫の画像 + 気持ち型タイトルにする.
+    word="Focus.",
+    image="youtube/assets/cat_tornado.png",          # sage の余白で正方形のまま使う
+    extra_thumbs={"vortex": "rooms/out/rain/thumb_cat_vortex.png"},
+    title="when your head won't stop spinning | calm music to focus & study",
+    alt_titles=[
+        "Focus. | Soft Rhodes & Piano Music for Deep Work and Study (1 Hour)",
+        "my brain after 6 hours of studying | calm focus music",
+    ],
+    lead="When your head won't stop spinning — an hour of calm, steady music to settle in and focus.",
+    use_line="Soft Rhodes, piano and a gentle beat for studying, deep work and reading.",
+    credits="Original composition. Rhodes, soft piano, warm pads, bass and light drums.\n"
+            "No sudden sounds, no talking. Starts right away.",
+    tags="#studymusic #focusmusic #ambient",
+    minutes=60,
+    bpm=72,
+    bars_per_chord=1,
+    fade_in=1.0,
+    lowpass=(6500, 1800),
+    chords=LOFI_CHORDS,
+    scale=[60, 62, 65, 67, 69, 72, 74, 77],  # F メジャー・ペンタ
+    parts={
+        "pad":    dict(kind="sustain", prog=89, vel=38),
+        "rhodes": dict(kind="comp", prog=4, vel=54),
+        "bass":   dict(kind="bass", prog=33, vel=60),
+        "piano":  dict(kind="arp", prog=0, vel=40, step=0.5),
+        "vibes":  dict(kind="sprinkle", prog=11, vel=44, octave=12, counts=[0, 1, 1, 2], prob=0.7),
+        "drums":  dict(kind="drums", prog=0, vel=44, swing=0.56),
+    },
+    # 静かな導入は作らない. 最初の章から全部の楽器がそろっている
+    chapters=[
+        dict(name="Settle In",  label="Settle In",   prog=["Fmaj9", "Dm9", "Bbmaj9", "C13sus4"], weight=2.0, parts=["pad", "rhodes", "bass", "drums", "vibes"], dark=(0.15, 0.15)),
+        dict(name="Deep Work",  label="Deep Work",   prog=["Am7", "Dm9", "Gm9", "C13sus4"], weight=2.0, parts=["pad", "rhodes", "bass", "drums", "piano"], dark=(0.15, 0.2)),
+        dict(name="Flow",       label="Flow",        prog=["Bbmaj9", "Am7", "Gm9", "C13sus4"], weight=2.0, parts=["pad", "piano", "bass", "drums", "vibes"], dark=(0.2, 0.2)),
+        dict(name="Second Wind", label="Second Wind", prog=["Fmaj9", "Dm9", "Bbmaj9", "C13sus4"], weight=2.0, parts=["pad", "rhodes", "bass", "drums", "piano"], dark=(0.2, 0.15)),
+        dict(name="Long Haul",  label="The Long Haul", prog=["Am7", "Dm9", "Gm9", "C13sus4"], weight=2.0, parts=["pad", "rhodes", "bass", "drums", "vibes"], dark=(0.15, 0.2)),
+        dict(name="Last Page",  label="Last Page",   prog=["Bbmaj9", "Am7", "Gm9", "C13sus4"], weight=2.0, parts=["pad", "rhodes", "piano", "bass", "drums"], dark=(0.2, 0.25)),
+    ],
+    sfx=[],
+    sfx_reverb=0.0,
+)
+
+CONCEPTS = {"rain": RAIN, "snow": SNOW, "ocean_sleep": OCEAN_SLEEP, "focus": FOCUS}

@@ -52,7 +52,8 @@ def build_midi(cfg, minutes, seed):
 
     def inst(name):
         if name not in insts:
-            insts[name] = pretty_midi.Instrument(cfg["parts"][name]["prog"], name=name)
+            p = cfg["parts"][name]
+            insts[name] = pretty_midi.Instrument(p["prog"], is_drum=p["kind"] == "drums", name=name)
         return insts[name]
 
     last = {}
@@ -104,6 +105,18 @@ def build_midi(cfg, minutes, seed):
                     if rng.random() < 0.5:
                         for j, n in enumerate(voicing[1:]):
                             add(name, n + octv, t + clen * 0.625 + j * 0.02, clen * 0.3, vel - 12)
+                elif kind == "drums":
+                    # 控えめな一定のリズム: キック 1・3 拍目 (+3拍目の裏)、リム 2・4 拍目、ハイハット 8 分 (軽いスウィング)
+                    swing = p.get("swing", 0.55)
+                    for b in range(cfg["bars_per_chord"]):
+                        t0 = t + b * 4 * beat
+                        for k in (0, 2.5):
+                            add(name, 36, t0 + k * beat, 0.2, vel, jitter=hum * 0.4)
+                        for r in (1, 3):
+                            add(name, 37, t0 + r * beat, 0.2, vel - 10, jitter=hum * 0.4)
+                        for e in range(8):
+                            off = e // 2 + (swing if e % 2 else 0)
+                            add(name, 42, t0 + off * beat, 0.1, vel - (14 if e % 2 else 8), jitter=hum * 0.3)
                 elif kind == "sprinkle":
                     if rng.random() > p.get("prob", 1.0):
                         continue
@@ -377,7 +390,26 @@ def to_image(arr):
     return Image.fromarray((np.clip(arr, 0, 1) * 255).astype(np.uint8))
 
 
+SAGE = (138, 150, 132)
+
+
+def framed(path, w, h, color=SAGE):
+    """正方形の画像を切り出さずに中央に置き、左右を単色の余白にする."""
+    src = Image.open(path).convert("RGB")
+    side = min(w, h)
+    im = Image.new("RGB", (w, h), color)
+    im.paste(src.resize((side, side), Image.LANCZOS), ((w - side) // 2, (h - side) // 2))
+    return im
+
+
 def make_images(cfg, out, seed):
+    if cfg.get("image"):
+        img = HERE.parent / cfg["image"]
+        framed(img, 1920, 1080).save(out / "video_still.png")
+        framed(img, 1280, 720).save(out / "thumb_main.png")
+        for name, path in cfg.get("extra_thumbs", {}).items():
+            Image.open(HERE.parent / path).convert("RGB").resize((1280, 720), Image.LANCZOS).save(out / f"thumb_{name}.png")
+        return
     scene = SCENES[cfg["scene"]]
     still = to_image(scene(1920, 1080, seed))
     still.save(out / "video_still.png")
@@ -428,9 +460,9 @@ def write_meta(cfg, out, chapters, length):
              "## Title (main)", "", f"`{cfg['title']}`", "",
              "## Title (alternatives for Test & Compare)", ""]
     lines += [f"- `{t}`" for t in cfg["alt_titles"]]
-    lines += ["", "## Thumbnails", "", "- `thumb_serif.png` (main, H1-H3 style)",
-              "- `thumb_bold.png` (bold text, for H4)", "",
-              "## Description", "", "```", cfg["lead"], cfg["use_line"], "", "Chapters"]
+    thumbs = sorted(f.name for f in out.glob("thumb_*.png"))
+    lines += ["", "## Thumbnails", ""] + [f"- `{t}`" for t in thumbs]
+    lines += ["", "## Description", "", "```", cfg["lead"], cfg["use_line"], "", "Chapters"]
     lines += [f"{ts(s)} {label}" for label, s in merged]
     lines += ["", cfg["credits"], "", cfg["tags"], "```", ""]
     (out / "meta.md").write_text("\n".join(lines), encoding="utf-8")
@@ -471,7 +503,7 @@ def main():
     render(out / f"{name}.mid", raw)
     print("rendered", flush=True)
     length = process(cfg, raw, out / f"{name}.wav", dark_points, args.seed,
-                     fade_out=cfg.get("fade_out", 10.0))
+                     fade_in=cfg.get("fade_in", 4.0), fade_out=cfg.get("fade_out", 10.0))
     raw.unlink()
     print(f"WAV   {ts(length)}", flush=True)
     if minutes <= 60:
