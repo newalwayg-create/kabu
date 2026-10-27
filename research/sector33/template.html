@@ -1,0 +1,325 @@
+<title>33業種ローテーション検証</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: verdict board for the six hypotheses, then 33-sector evidence: monthly heatmap, factor heatmap, conditional heatmap, 100% share chart with up to 7 highlighted sectors, share-change bars, recent table */
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14161a; --ink-2: #474c56; --muted: #757b87; --line: #dfe2e7; --grid: #eceef1;
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100; --c5: #e87ba4; --c6: #008300; --c7: #4a3aa7; --other: #c9ccd2;
+  --neg: #2a78d6; --mid: #f0efec; --pos: #e34948;
+  --good: #0ca30c; --warn: #fab219; --bad: #d03b3b; --none: #8a8f99;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111317; --surface: #1a1c21; --ink: #f1f2f4; --ink-2: #c3c7cf; --muted: #8d93a0; --line: #2c3038; --grid: #24272e;
+    --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --other: #4a4e57;
+    --neg: #3987e5; --mid: #383835; --pos: #e66767; --good: #2fbf2f; --warn: #fab219; --bad: #e66767; --none: #8d93a0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111317; --surface: #1a1c21; --ink: #f1f2f4; --ink-2: #c3c7cf; --muted: #8d93a0; --line: #2c3038; --grid: #24272e;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300; --c7: #9085e9; --other: #4a4e57;
+  --neg: #3987e5; --mid: #383835; --pos: #e66767; --good: #2fbf2f; --warn: #fab219; --bad: #e66767; --none: #8d93a0; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.7; }
+.wrap { max-width: 1060px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 72px; display: grid; gap: 48px; }
+h1 { font-size: clamp(26px, 4.4vw, 36px); font-weight: 900; margin: 0; line-height: 1.3; text-wrap: balance; }
+h2 { font-size: 21px; font-weight: 700; margin: 0; text-wrap: balance; }
+h3 { font-size: 15px; font-weight: 700; margin: 0; line-height: 1.5; }
+p { margin: 0; max-width: 72ch; color: var(--ink-2); }
+header { display: grid; gap: 12px; }
+.eyebrow { font-size: 12px; color: var(--muted); letter-spacing: .12em; }
+.macro { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.macro b { color: var(--ink); font-weight: 500; font-family: var(--font-data); }
+.board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.verdict { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.verdict .q { font-size: 14.5px; font-weight: 700; line-height: 1.55; }
+.verdict p { font-size: 13.5px; line-height: 1.7; }
+.verdict .prev { font-size: 12.5px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 6px; }
+.pill { justify-self: start; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); }
+.pill i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.pill.yes i { background: var(--good); } .pill.part i { background: var(--warn); } .pill.no i { background: var(--bad); } .pill.na i { background: var(--none); }
+section { display: grid; gap: 14px; }
+.sec-head { display: grid; gap: 6px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.panel-title { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 11px; height: 11px; border-radius: 2px; display: inline-block; flex: none; }
+.chart { position: relative; min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.scroll { overflow-x: auto; }
+.scroll > svg { min-width: 720px; }
+.toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; gap: 2px; flex-wrap: wrap; }
+.toggle button { font: inherit; font-size: 12.5px; border: 0; background: transparent; color: var(--ink-2); padding: 3px 12px; border-radius: 999px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: inherit; font-size: 12px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); padding: 2px 10px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-2); font-weight: 700; }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--c1); outline-offset: 2px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.note { font-size: 12.5px; color: var(--muted); line-height: 1.65; }
+details { border-top: 1px solid var(--line); padding-top: 8px; }
+summary { cursor: pointer; font-size: 12.5px; color: var(--muted); width: fit-content; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 5px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 500; color: var(--muted); font-size: 12px; }
+td.n { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card ul { margin: 0; padding-left: 1.2em; color: var(--ink-2); font-size: 13.5px; display: grid; gap: 4px; }
+.tip { position: fixed; pointer-events: none; z-index: 10; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.55; box-shadow: 0 6px 18px rgba(0,0,0,.12); max-width: 320px; }
+.tip .k { color: var(--muted); } .tip .v { font-family: var(--font-data); }
+footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 4px; }
+@media (max-width: 760px) { .board { grid-template-columns: minmax(0, 1fr); } .wrap { padding-inline: 16px; gap: 40px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">日本株・東証33業種の資金移動 ／ 6つの仮説の検証</div>
+    <h1>33業種で見ても、金利は銀行・保険を、原油は資源と海運を動かす。半導体から使う側への移動は業種単位では見えない</h1>
+    <p>Yahoo!ファイナンスの業種区分のもとになっている東証33業種で、前回と同じ6つの仮説を検証し直しました。各業種は時価総額上位の代表銘柄（計161銘柄）を時価総額で加重し、TOPIXとの差（超過リターン）で比べています。金利・原油・SOXとの関係は2019年以降の週次データで推定しています。</p>
+    <div class="macro" id="macro"></div>
+  </header>
+
+  <section><div class="sec-head"><h2>判定の一覧</h2><p>カードの下段は、前回の9業種（独自の業種バスケット）での判定との比較です。</p></div><div class="board" id="board"></div></section>
+
+  <section>
+    <div class="sec-head"><h2>33業種の月次の超過リターン</h2><p>赤はTOPIXより上昇、青は下落した月です。</p></div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">TOPIXとの差（%）・直近18か月</span>
+        <div class="legend"><span><i class="sw" style="background:var(--neg)"></i>−15%以下</span><span><i class="sw" style="background:var(--mid);outline:1px solid var(--line)"></i>0</span><span><i class="sw" style="background:var(--pos)"></i>+15%以上</span></div></div>
+      <div class="chart scroll" id="c-month"></div>
+      <p class="note">2026年10月は 10/8 までの途中経過です。</p>
+      <details><summary>表で見る</summary><div class="tbl-wrap" id="t-month"></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>金利・原油・SOXが動いたときの反応</h2>
+      <p>左は各要因が1標準偏差動いた週の超過リターン（4要因を同時に推定）、右は各要因が大きく上がった週（上位20%）の平均超過リターンです。枠で囲んだセルは統計的に有意（t値の絶対値が2以上）です。</p></div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">要因の感応度と、大きく上がった週の反応（%）</span>
+        <div class="toggle" role="group" aria-label="感応度の期間"><button type="button" id="b-full" aria-pressed="true">感応度: 2019年以降</button><button type="button" id="b-1y" aria-pressed="false">感応度: 直近1年</button></div></div>
+      <div class="chart scroll" id="c-beta"></div>
+      <p class="note">国内金利は国内債券ETF（2510）からの推定値、中東リスクは原油（ブレント）で代用しています。</p>
+      <details><summary>表で見る（t値つき）</summary><div class="tbl-wrap" id="t-beta"></div></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>業種シェア（合計 = 1）</h2>
+      <p>33業種の合計を1とした比率を月ごとに積み上げました。色を付けられるのは同時に7業種までなので、残りは灰色の「その他」にまとめています。下のボタンで、色を付ける業種を選び直せます（8つ目を選ぶと、最初に選んだ業種が外れます）。</p></div>
+    <div class="panel">
+      <div class="panel-head"><div class="controls">
+        <div class="toggle" role="group" aria-label="指標"><button type="button" id="s-tv" aria-pressed="true">売買代金</button><button type="button" id="s-cap" aria-pressed="false">時価総額</button></div>
+        <div class="toggle" role="group" aria-label="期間"><button type="button" id="r-3y" aria-pressed="true">3年</button><button type="button" id="r-all" aria-pressed="false">2019年以降</button></div>
+      </div></div>
+      <div class="chips" id="chips"></div>
+      <div class="chart" id="c-share"></div>
+      <p class="note">比率は代表銘柄161社の中での値です。市場全体の比率とは異なります。時価総額は現在の発行株数で計算しています。</p>
+      <details><summary>表で見る（直近12か月・全33業種）</summary><div class="tbl-wrap" id="t-share"></div></details>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title" id="chg-title">売買代金シェアの変化（直近3か月 − その前の12か月、pt）</span></div>
+      <div class="chart" id="c-chg"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>直近の業種別の動き（10/8 時点、3か月の超過リターン順）</h2></div>
+    <div class="panel"><div class="tbl-wrap" id="t-recent"></div></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>方法と限界</h2></div>
+    <div class="card"><ul>
+      <li>業種区分は東証33業種です。Yahoo!ファイナンスの業種別ページはこの環境から開けなかったため、区分名は東証の名称で表示しています。</li>
+      <li>各業種は時価総額上位の代表銘柄（2〜6社）の時価総額加重で、東証の業種指数そのものではありません。空運業（2社）、鉱業・石油石炭（3社）は銘柄が少なく、1社の影響が大きくなります。</li>
+      <li>33業種には「半導体」「サイバーセキュリティ」という区分がありません。半導体の多くは電気機器（一部は機械・金属製品）に、サイバーは情報・通信業に含まれ、比重の大きい他の銘柄に薄められます。情報・通信業にはソフトバンクGが含まれ、SOXとの相関が高めです。</li>
+      <li>日本の金利は国内債券ETFからの推定値、中東リスクは原油価格での代用です。相関や感応度は因果関係を示しません。</li>
+    </ul><details><summary>業種ごとの銘柄</summary><div class="tbl-wrap" id="t-members"></div></details></div>
+  </section>
+
+  <footer>
+    <span>データ: Yahoo Finance（日足、2019年1月〜2026年10月8日）。分析コード: newalwayg-create/kabu の research/sector33。前回の9業種版: research/sector。</span>
+    <span>これは投資助言ではなく、データの検証結果です。</span>
+  </footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const D = __DATA__;
+const NS = "http://www.w3.org/2000/svg";
+const O = D.order;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const sg = (v, d = 1) => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(d);
+function el(tag, a = {}, p) { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); if (p) p.appendChild(e); return e; }
+function svg(w, h, host) { host.innerHTML = ""; return el("svg", {viewBox: `0 0 ${w} ${h}`, role: "img"}, host); }
+function txt(p, x, y, s, a = {}) { const t = el("text", {x, y, fill: css("--ink-2"), "font-size": 11, "font-family": "Zen Kaku Gothic New, sans-serif", ...a}, p); t.textContent = s; return t; }
+const mono = {"font-family": "IBM Plex Mono, monospace"};
+const tip = document.getElementById("tip");
+function showTip(e, html) { tip.innerHTML = html; tip.hidden = false; const r = tip.getBoundingClientRect(); let x = e.clientX + 14, y = e.clientY + 14; if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14; tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px"; }
+const hideTip = () => tip.hidden = true;
+function bind(n, html) { n.addEventListener("pointermove", e => showTip(e, typeof html === "function" ? html() : html)); n.addEventListener("pointerleave", hideTip); }
+function mix(a, b, t) { const p = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); const A = p(a), B = p(b); return "rgb(" + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",") + ")"; }
+function div(v, cap) { const t = Math.min(1, Math.abs(v) / cap); return v >= 0 ? mix(css("--mid"), css("--pos"), t) : mix(css("--mid"), css("--neg"), t); }
+const inkOn = (v, cap) => Math.abs(v) / cap > .6 ? "#fff" : css("--ink");
+function table(id, head, rows) { document.getElementById(id).innerHTML = `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td class="${i ? "n" : ""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`; }
+function press(ids, on) { ids.forEach(id => document.getElementById(id).setAttribute("aria-pressed", id === on)); }
+const idx = s => O.indexOf(s);
+const cond = (fac, s) => D.cond[fac][idx(s)];
+const rec = (s, col) => D.recent.values[D.recent.index.indexOf(s)][D.recent.columns.indexOf(col)];
+const bt = (k, s, f) => D.beta[k].t.values[idx(s)][["米10年金利", "国内金利", "ブレント原油", "SOX"].indexOf(f)];
+
+// ---------- header & verdicts ----------
+document.getElementById("macro").innerHTML = Object.entries(D.macro).filter(([k]) => k !== "as_of").map(([k, v]) => `<span>${k}（3か月） <b>${esc(v)}</b></span>`).join("") + `<span>時点 <b>${D.macro.as_of}</b></span>`;
+const c = (f, s) => `${sg(cond(f, s)[0], 2)}%（t ${sg(cond(f, s)[1], 1)}）`;
+const V = [
+  ["no", "否定", "金利上昇で半導体・AIが売られ、医薬・食品・陸運などディフェンシブに資金が移っている",
+   `国内金利が大きく上がった週、医薬品 ${c("国内金利", "医薬品")}・食料品 ${c("国内金利", "食料品")}・陸運業 ${c("国内金利", "陸運業")} はむしろ弱く、電気機器 ${c("国内金利", "電気機器")} も動いていません。ディフェンシブが上がるのはSOXが下げた週です（SOX感応度の t値: 食料品 ${sg(bt("beta_full", "食料品", "SOX"), 1)}、陸運業 ${sg(bt("beta_full", "陸運業", "SOX"), 1)}、医薬品 ${sg(bt("beta_full", "医薬品", "SOX"), 1)}）。金利上昇で最も下げるのは不動産業 ${c("国内金利", "不動産業")} で、化学・小売業も弱くなります。`,
+   "前回（9業種）: 否定。33業種でも同じ結論です。"],
+  ["yes", "支持", "金利上昇で銀行・保険に資金が移っている",
+   `国内金利が大きく上がった週に、銀行業 ${c("国内金利", "銀行業")}、保険業 ${c("国内金利", "保険業")}、証券 ${c("国内金利", "証券、商品先物取引業")}。直近3か月の超過は銀行業 ${sg(rec("銀行業", "3か月"), 1)}%、保険業 ${sg(rec("保険業", "3か月"), 1)}% で、銀行業の売買代金シェアは ${sg(rec("銀行業", "売買代金シェアの変化(pt)"), 2)}pt 増えました。`,
+   "前回（9業種）: 支持。33業種でも同じ結論です。"],
+  ["yes", "支持（原油で代用）。ただし資源株の反応がより強い", "中東リスクで海運に資金が移っている",
+   `原油が大きく上がった週に、海運業 ${c("ブレント原油", "海運業")}。ただし鉱業 ${c("ブレント原油", "鉱業")}、石油・石炭製品 ${c("ブレント原油", "石油・石炭製品")} の方が強く反応し、卸売業（商社）${c("ブレント原油", "卸売業")} も上がります。直近3か月の超過は海運業 ${sg(rec("海運業", "3か月"), 1)}% で33業種の首位です。`,
+   "前回（9業種）: 支持。資源・商社という、より強い受け皿が見つかりました。"],
+  ["no", "33業種では確認できない", "AIを作る側（半導体）から使う側・守る側（サービス・サイバー）に資金が移っている",
+   `直近3か月の超過は、電気機器 ${sg(rec("電気機器", "3か月"), 1)}%、情報・通信業 ${sg(rec("情報・通信業", "3か月"), 1)}%、サービス業 ${sg(rec("サービス業", "3か月"), 1)}%。サービス業は上がっていますが、電気機器も上がっており、売買代金シェアは電気機器が ${sg(rec("電気機器", "売買代金シェアの変化(pt)"), 2)}pt と逆に増えました。電気機器とサービス業の週次の相関も ${sg(D.rot["電気機器×サービス業"][0], 2)}（直近1年 ${sg(D.rot["電気機器×サービス業"][1], 2)}）で、移動の関係は見られません。`,
+   "前回（9業種）: 一部支持。半導体だけを抜き出せば移動が見えますが、ソニー・日立などを含む電気機器全体では見えません。"],
+  ["part", "業種単位では弱い支持（今は調整局面ではない）", "半導体は一時的な調整で、決算で戻る",
+   `電気機器は高値から ${sg(D.h5_now, 1)}% で、業種全体では調整していません。過去に電気機器が10〜20%下げた局面の3か月後は TOPIX より ${sg(D.h5["下落率10〜20%"]["3か月後"], 1)}%（上回った割合 ${Math.round(D.h5["下落率10〜20%"]["上回った割合"] * 100)}%）で、普段（${sg(D.h5["それ以外"]["3か月後"], 1)}%、${Math.round(D.h5["それ以外"]["上回った割合"] * 100)}%）よりやや戻りやすい傾向でした。`,
+   "前回（半導体10銘柄）: 根拠不十分。半導体株そのものでは、下落後に戻りやすい傾向も、決算後に戻る傾向も見られませんでした。"],
+  ["na", "33業種では検証できない", "サイバーセキュリティは金利や半導体と関係なく、独立したテーマとして続く",
+   `33業種にはサイバーセキュリティの区分がなく、情報・通信業（NTT・KDDI・ソフトバンクGなど）に埋もれます。情報・通信業はSOXとの相関が ${sg(D.h6.values[idx("情報・通信業")][2], 2)} と高く、ソフトバンクGの影響を受けています。`,
+   "前回（サイバー6銘柄）: 「独立」は支持（市場と要因で説明できるのは28%）、「続く」は不支持。"],
+];
+document.getElementById("board").innerHTML = V.map(([k, lab, q, body, prev]) => `<div class="verdict"><span class="pill ${k}"><i></i>${lab}</span><div class="q">${q}</div><p>${body}</p><div class="prev">${prev}</div></div>`).join("");
+
+// ---------- monthly heatmap ----------
+function monthHeat() {
+  const M = D.monthly, host = document.getElementById("c-month"), cols = M.index;
+  const cw = 44, ch = 22, L = 150, T = 30, w = L + cols.length * cw + 4, h = T + O.length * ch + 4;
+  const s = svg(w, h, host);
+  cols.forEach((d, j) => txt(s, L + j * cw + cw / 2, T - 10, d.slice(2).replace("-", "/"), {"text-anchor": "middle", fill: css("--muted"), "font-size": 10, ...mono}));
+  O.forEach((b, i) => {
+    txt(s, L - 8, T + i * ch + ch / 2 + 4, b, {"text-anchor": "end", fill: css("--ink"), "font-size": 11});
+    cols.forEach((d, j) => {
+      const v = M.values[j][i], x = L + j * cw, y = T + i * ch;
+      const r = el("rect", {x: x + 1, y: y + 1, width: cw - 2, height: ch - 2, rx: 2, fill: v == null ? css("--grid") : div(v, 15)}, s);
+      if (v != null) txt(s, x + cw / 2, y + ch / 2 + 4, (v > 0 ? "+" : "") + Math.round(v), {"text-anchor": "middle", fill: inkOn(v, 15), "font-size": 10, "pointer-events": "none", ...mono});
+      bind(r, `<b>${b}</b> ${d}<br><span class="k">TOPIXとの差</span> <span class="v">${sg(v, 1)}%</span>`);
+    });
+  });
+  table("t-month", ["業種", ...cols], O.map((b, i) => [b, ...cols.map((_, j) => sg(M.values[j][i], 1))]));
+}
+
+// ---------- factor + conditional heatmap ----------
+let betaKey = "beta_full";
+function betaHeat() {
+  const B = D.beta[betaKey], F = B.b.columns, CF = ["米10年金利", "国内金利", "ブレント原油"];
+  const host = document.getElementById("c-beta"), cw = 92, ch = 22, L = 150, T = 46, gapX = 26;
+  const w = L + F.length * cw + gapX + CF.length * cw + 8, h = T + O.length * ch + 4;
+  const s = svg(w, h, host);
+  txt(s, L + F.length * cw / 2, 14, "感応度（1標準偏差あたり）", {"text-anchor": "middle", fill: css("--muted"), "font-size": 11});
+  txt(s, L + F.length * cw + gapX + CF.length * cw / 2, 14, `大きく上がった週の平均（${D.cond_n}週）`, {"text-anchor": "middle", fill: css("--muted"), "font-size": 11});
+  F.forEach((f, j) => txt(s, L + j * cw + cw / 2, T - 10, f, {"text-anchor": "middle", fill: css("--ink"), "font-size": 11}));
+  CF.forEach((f, j) => txt(s, L + F.length * cw + gapX + j * cw + cw / 2, T - 10, f, {"text-anchor": "middle", fill: css("--ink"), "font-size": 11}));
+  const cell = (x, y, v, t, cap, html) => {
+    const sig = Math.abs(t) >= 2;
+    const r = el("rect", {x: x + 2, y: y + 1, width: cw - 4, height: ch - 2, rx: 2, fill: div(v, cap), stroke: sig ? css("--ink") : "none", "stroke-width": sig ? 1.3 : 0}, s);
+    txt(s, x + cw / 2, y + ch / 2 + 4, `${sg(v, 2)}`, {"text-anchor": "middle", fill: inkOn(v, cap), "font-size": 10.5, "font-weight": sig ? 700 : 400, "pointer-events": "none", ...mono});
+    bind(r, html);
+  };
+  O.forEach((b, i) => {
+    const y = T + i * ch;
+    txt(s, L - 8, y + ch / 2 + 4, b, {"text-anchor": "end", fill: css("--ink"), "font-size": 11});
+    F.forEach((f, j) => { const v = B.b.values[i][j], t = B.t.values[i][j]; cell(L + j * cw, y, v, t, 1.2, `<b>${b}</b> × ${f}<br><span class="k">1標準偏差あたり</span> <span class="v">${sg(v, 2)}%</span><br><span class="k">t値</span> <span class="v">${sg(t, 1)}</span>`); });
+    CF.forEach((f, j) => { const [v, t, hit] = D.cond[f][i]; cell(L + F.length * cw + gapX + j * cw, y, v, t, 2, `<b>${b}</b>：${f}が大きく上がった週<br><span class="k">平均超過</span> <span class="v">${sg(v, 2)}%</span><br><span class="k">t値</span> <span class="v">${sg(t, 1)}</span><br><span class="k">TOPIXを上回った割合</span> <span class="v">${Math.round(hit * 100)}%</span>`); });
+  });
+  table("t-beta", ["業種", ...F.flatMap(f => [f, "t"]), "R²", ...CF.map(f => f + "が大きく上がった週（t）")],
+    O.map((b, i) => [b, ...F.flatMap((f, j) => [sg(B.b.values[i][j], 2), sg(B.t.values[i][j], 1)]), Math.round(B.r2[i] * 100) + "%", ...CF.map(f => `${sg(D.cond[f][i][0], 2)}（${sg(D.cond[f][i][1], 1)}）`)]));
+}
+
+// ---------- 100% stacked share with up-to-7 highlighted sectors ----------
+const SC = ["--c1", "--c2", "--c3", "--c4", "--c5", "--c6", "--c7"];
+let shareKey = "tv", range = 36;
+const slot = new Map([["電気機器", 0], ["情報・通信業", 1], ["サービス業", 2], ["医薬品", 3], ["銀行業", 4], ["保険業", 5], ["海運業", 6]]);
+const picked = [...slot.keys()];
+function toggleSector(s) {
+  if (slot.has(s)) { slot.delete(s); picked.splice(picked.indexOf(s), 1); }
+  else {
+    if (slot.size >= 7) { const old = picked.shift(); slot.delete(old); }
+    const used = new Set(slot.values()); let k = 0; while (used.has(k)) k++;
+    slot.set(s, k); picked.push(s);
+  }
+  chips(); shareChart();
+}
+function chips() {
+  document.getElementById("chips").innerHTML = O.map(s => `<button type="button" class="chip" data-s="${esc(s)}" aria-pressed="${slot.has(s)}">${slot.has(s) ? `<i class="sw" style="background:var(${SC[slot.get(s)]})"></i>` : ""}${esc(s)}</button>`).join("") +
+    `<span class="chip" style="cursor:default"><i class="sw" style="background:var(--other)"></i>その他</span>`;
+  document.querySelectorAll("#chips button").forEach(b => b.onclick = () => toggleSector(b.dataset.s));
+}
+function shareChart() {
+  const S = D[shareKey], n = S.index.length, st = Math.max(0, n - range), months = S.index.slice(st), vals = S.values.slice(st);
+  const host = document.getElementById("c-share"), w = 760, h = 320, L = 40, R = 8, T = 8, B = 28, bw = (w - L - R) / months.length;
+  const s = svg(w, h, host), ys = v => T + (1 - v) * (h - T - B);
+  for (const v of [0, .25, .5, .75, 1]) { el("line", {x1: L, x2: w - R, y1: ys(v), y2: ys(v), stroke: css("--grid")}, s); txt(s, L - 6, ys(v) + 4, v * 100 + "%", {"text-anchor": "end", fill: css("--muted"), "font-size": 10, ...mono}); }
+  const order = [...slot.entries()].sort((a, b) => a[1] - b[1]).map(([k]) => k);
+  months.forEach((m, j) => {
+    const x = L + j * bw; let acc = 0; const row = vals[j];
+    const parts = order.map(sct => [sct, row[idx(sct)] || 0, css(SC[slot.get(sct)])]);
+    const other = 1 - parts.reduce((a, p) => a + p[1], 0);
+    parts.push(["その他", Math.max(0, other), css("--other")]);
+    for (const [, v, col] of parts) { if (v <= 0) continue; el("rect", {x: x + .5, y: ys(acc + v), width: Math.max(.5, bw - 1), height: Math.max(0, ys(acc) - ys(acc + v) - (v > .005 ? 1 : 0)), fill: col}, s); acc += v; }
+    if (j % Math.ceil(months.length / 12) === 0 || j === months.length - 1) txt(s, x + bw / 2, h - 8, m.slice(2).replace("-", "/"), {"text-anchor": "middle", fill: css("--muted"), "font-size": 10, ...mono});
+    const hit = el("rect", {x, y: T, width: bw, height: h - T - B, fill: "transparent"}, s);
+    bind(hit, () => `<b>${m}</b>` + parts.map(([k, v, col]) => `<br><i class="sw" style="background:${col}"></i> <span class="k">${k}</span> <span class="v">${(v * 100).toFixed(1)}%</span>`).join("") +
+      `<br><span class="k" style="font-size:11px">その他の上位: ${O.filter(o => !slot.has(o)).map(o => [o, row[idx(o)] || 0]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([o, v]) => `${o} ${(v * 100).toFixed(1)}%`).join("、")}</span>`);
+  });
+  const last12 = S.index.slice(-12);
+  table("t-share", ["業種", ...last12], O.map((b, i) => [b, ...last12.map((_, jj) => ((S.values[n - 12 + jj][i] || 0) * 100).toFixed(1) + "%")]));
+  changeBars();
+}
+function changeBars() {
+  const col = shareKey === "tv" ? "売買代金シェアの変化(pt)" : "時価総額シェアの変化(pt)";
+  document.getElementById("chg-title").textContent = shareKey === "tv" ? "売買代金シェアの変化（直近3か月 − その前の12か月、pt）" : "時価総額シェアの変化（直近3か月、pt）";
+  const rows = O.map(s => [s, rec(s, col)]).sort((a, b) => b[1] - a[1]);
+  const host = document.getElementById("c-chg"), w = 760, rh = 17, L = 150, R = 60, T = 6, h = T + rows.length * rh + 22;
+  const s = svg(w, h, host), mx = Math.max(...rows.map(r => Math.abs(r[1]))) || 1, x0 = L + (w - L - R) / 2, sc = v => v / mx * (w - L - R) / 2;
+  el("line", {x1: x0, x2: x0, y1: T, y2: h - 18, stroke: css("--muted")}, s);
+  rows.forEach(([b, v], i) => {
+    const y = T + i * rh;
+    txt(s, L - 8, y + rh / 2 + 4, b, {"text-anchor": "end", fill: css("--ink"), "font-size": 10.5});
+    const wv = sc(v);
+    el("rect", {x: wv >= 0 ? x0 : x0 + wv, y: y + 3, width: Math.max(1, Math.abs(wv)), height: rh - 6, rx: 2, fill: v >= 0 ? css("--pos") : css("--neg")}, s);
+    txt(s, wv >= 0 ? x0 + wv + 4 : x0 + wv - 4, y + rh / 2 + 4, sg(v, 2), {"text-anchor": wv >= 0 ? "start" : "end", fill: css("--ink-2"), "font-size": 10, ...mono});
+    bind(el("rect", {x: 0, y, width: w, height: rh, fill: "transparent"}, s), `<b>${b}</b><br><span class="k">シェアの変化</span> <span class="v">${sg(v, 2)}pt</span>`);
+  });
+}
+document.getElementById("s-tv").onclick = () => { shareKey = "tv"; press(["s-tv", "s-cap"], "s-tv"); shareChart(); };
+document.getElementById("s-cap").onclick = () => { shareKey = "cap"; press(["s-tv", "s-cap"], "s-cap"); shareChart(); };
+document.getElementById("r-3y").onclick = () => { range = 36; press(["r-3y", "r-all"], "r-3y"); shareChart(); };
+document.getElementById("r-all").onclick = () => { range = 999; press(["r-3y", "r-all"], "r-all"); shareChart(); };
+document.getElementById("b-full").onclick = () => { betaKey = "beta_full"; press(["b-full", "b-1y"], "b-full"); betaHeat(); };
+document.getElementById("b-1y").onclick = () => { betaKey = "beta_1y"; press(["b-full", "b-1y"], "b-1y"); betaHeat(); };
+
+function recentTable() {
+  const Rr = D.recent, rows = Rr.index.map((b, i) => [b, ...Rr.values[i]]).sort((a, b) => b[2] - a[2]);
+  table("t-recent", ["業種", ...Rr.columns], rows.map(r => [r[0], ...r.slice(1).map((v, j) => sg(v, j >= 3 ? 2 : 1) + (j >= 3 ? "pt" : "%"))]));
+  table("t-members", ["業種", "銘柄"], Object.entries(D.members).map(([b, m]) => [b, `<span style="white-space:normal">${Object.entries(m).map(([cd, n]) => `${n}(${cd})`).join("、")}</span>`]));
+}
+
+function renderAll() { monthHeat(); betaHeat(); shareChart(); }
+recentTable(); chips(); renderAll();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
+new MutationObserver(renderAll).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+</script>
