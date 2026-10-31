@@ -213,4 +213,47 @@ FOCUS = dict(
     sfx_reverb=0.0,
 )
 
-CONCEPTS = {"rain": RAIN, "snow": SNOW, "ocean_sleep": OCEAN_SLEEP, "focus": FOCUS}
+def transposed(chords, semitones):
+    """コード表をまるごと移調する (同じ進行を別のキーで使い回すため)."""
+    return {k: (r + semitones, [n + semitones for n in v]) for k, (r, v) in chords.items()}
+
+
+def focus_variant(still, title, alt_titles, lead, bpm, semitones, lowpass, **extra):
+    """窓辺の猫 (FOCUS) の型を、絵・タイトル・キー・テンポだけ変えて使い回す."""
+    cfg = dict(FOCUS)
+    cfg.pop("image", None)
+    cfg.update(
+        still=still, extra_thumbs={}, title=title, alt_titles=alt_titles, lead=lead,
+        bpm=bpm, lowpass=lowpass,
+        chords=transposed(LOFI_CHORDS, semitones),
+        scale=[n + semitones for n in FOCUS["scale"]],
+        **extra,
+    )
+    return cfg
+
+
+# 2026-10-31: ミーム猫 3 枚 (ChatGPT で生成) × 窓辺の猫の曲の型. タイトルは隣に並ぶ動画にならった「ゆるい一言」型
+MEME_SHOCK = focus_variant(
+    still="youtube/assets/meme_cat_shock.png",
+    title="when you realize the deadline is tomorrow | calm music to focus & study",
+    alt_titles=["the deadline is tomorrow. | calm music to focus & study"],
+    lead="When you realize the deadline is tomorrow — an hour of calm, steady music to get it done.",
+    bpm=74, semitones=2, lowpass=(6500, 1800), word="Deadline.",
+)
+MEME_LOADING = focus_variant(
+    still="youtube/assets/meme_cat_loading.png",
+    title="my brain at 3am trying to study | lofi music to focus",
+    alt_titles=["brain still loading... | lofi music to focus & study"],
+    lead="My brain at 3am trying to study — an hour of soft, steady lofi to keep going.",
+    bpm=70, semitones=-3, lowpass=(5500, 1600), word="Loading.",
+)
+MEME_JUDGE = focus_variant(
+    still="youtube/assets/meme_cat_judge.png",
+    title="you said you'd start studying an hour ago | calm focus music",
+    alt_titles=["start studying. now. | calm focus music"],
+    lead="You said you'd start studying an hour ago — here's an hour of calm, steady music. Go.",
+    bpm=76, semitones=5, lowpass=(6500, 1800), word="Judged.",
+)
+
+CONCEPTS = {"rain": RAIN, "snow": SNOW, "ocean_sleep": OCEAN_SLEEP, "focus": FOCUS,
+            "meme_shock": MEME_SHOCK, "meme_loading": MEME_LOADING, "meme_judge": MEME_JUDGE}

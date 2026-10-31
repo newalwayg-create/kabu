@@ -403,13 +403,17 @@ def framed(path, w, h, color=SAGE):
 
 
 def make_images(cfg, out, seed):
-    if cfg.get("image"):
-        img = HERE.parent / cfg["image"]
-        if cfg.get("still"):  # 動画の背景だけ別の 16:9 の絵にする場合
-            Image.open(HERE.parent / cfg["still"]).convert("RGB").resize((1920, 1080), Image.LANCZOS).save(out / "video_still.png")
+    if cfg.get("image") or cfg.get("still"):
+        def full(path, w, h):
+            return Image.open(HERE.parent / path).convert("RGB").resize((w, h), Image.LANCZOS)
+        if cfg.get("still"):  # 16:9 の絵を動画の背景にそのまま使う
+            full(cfg["still"], 1920, 1080).save(out / "video_still.png")
         else:
-            framed(img, 1920, 1080).save(out / "video_still.png")
-        framed(img, 1280, 720).save(out / "thumb_main.png")
+            framed(HERE.parent / cfg["image"], 1920, 1080).save(out / "video_still.png")
+        if cfg.get("image"):  # 正方形の絵は sage の余白で
+            framed(HERE.parent / cfg["image"], 1280, 720).save(out / "thumb_main.png")
+        else:
+            full(cfg["still"], 1280, 720).save(out / "thumb_main.png")
         for name, path in cfg.get("extra_thumbs", {}).items():
             Image.open(HERE.parent / path).convert("RGB").resize((1280, 720), Image.LANCZOS).save(out / f"thumb_{name}.png")
         return
