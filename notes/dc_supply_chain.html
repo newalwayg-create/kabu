@@ -1,0 +1,389 @@
+<title>DC部材 日本株マップ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column, wide tables scroll inside their own frame; copper accent = power/cabling, teal = Tier 1 */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --fg:#1b2230; --muted:#5b6474; --line:#d9dde5;
+  --accent:#a8572a; --t1:#0f6f6a; --t1bg:#e2f2f0; --t2:#8a5a00; --t2bg:#fbefd6; --t3:#5b6474; --t3bg:#eceef2;
+  --warn:#9b2c2c; --warnbg:#fbe8e8;
+  --display:"Zen Kaku Gothic New","Noto Sans JP","Hiragino Sans",sans-serif;
+  --body:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161d; --surface:#1a2029; --fg:#e6e9ee; --muted:#9aa3b2; --line:#2c3441;
+  --accent:#e08a55; --t1:#5fd0c6; --t1bg:#12302e; --t2:#f0bd5a; --t2bg:#352a12; --t3:#aab2bf; --t3bg:#262d38;
+  --warn:#f19a9a; --warnbg:#3a1c1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161d; --surface:#1a2029; --fg:#e6e9ee; --muted:#9aa3b2; --line:#2c3441;
+  --accent:#e08a55; --t1:#5fd0c6; --t1bg:#12302e; --t2:#f0bd5a; --t2bg:#352a12; --t3:#aab2bf; --t3bg:#262d38;
+  --warn:#f19a9a; --warnbg:#3a1c1c; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+h1{font-family:var(--display);font-size:clamp(26px,4vw,36px);line-height:1.25;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-size:22px;margin:0 0 4px;text-wrap:balance;display:flex;gap:10px;align-items:baseline}
+h2 .no{font-family:var(--mono);font-size:14px;color:var(--accent)}
+h3{font-family:var(--display);font-size:17px;margin:18px 0 6px}
+p{margin:0;max-width:72ch}
+a{color:var(--accent);text-underline-offset:2px;word-break:break-all}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--muted);font-size:13px;font-family:var(--mono)}
+.layer{font-size:12px;letter-spacing:.08em;color:var(--accent);font-weight:700}
+section{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--warnbg);color:var(--fg);border-left:4px solid var(--warn);padding:12px 16px;border-radius:4px}
+.note ul{margin:6px 0 0;padding-left:20px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+th{font-weight:700;color:var(--muted);font-size:12px;letter-spacing:.04em;background:var(--surface);position:sticky;top:0}
+td.n,th.n{text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.sum{font-weight:700;color:var(--accent)}
+td.co{white-space:nowrap;font-weight:500}
+td.ev{min-width:380px}
+tr:last-child td{border-bottom:none}
+.tier{display:inline-block;font-family:var(--mono);font-size:12px;padding:1px 7px;border-radius:999px;white-space:nowrap}
+.t1{background:var(--t1bg);color:var(--t1)} .t2{background:var(--t2bg);color:var(--t2)} .t3{background:var(--t3bg);color:var(--t3)}
+.tag{font-size:11px;color:var(--warn);white-space:nowrap}
+.others{font-size:13px;color:var(--muted);margin:0;max-width:none}
+.others b{color:var(--fg)}
+ul.plain{margin:0;padding-left:20px;max-width:80ch}
+ul.plain li{margin:2px 0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.card h4{margin:0 0 4px;font-size:14px;font-family:var(--display)}
+.card ul{margin:0;padding-left:18px;font-size:13px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:10px">
+  <div class="layer">SECTOR MAP ・ DATA CENTER PHYSICAL STACK</div>
+  <h1>データセンター部材と日本の上場企業</h1>
+  <p>DCの物理的な構成要素（13項目）ごとに、日本の上場企業との関連の強さを評価しました。売買の推奨は含みません。</p>
+  <div class="meta"><span>確認日 2026-11-10</span><span>評価 A 売上へのつながり／B 不可欠性／C AIで増える度合い／D 情報の確かさ（各1〜5、計20）</span></div>
+  <div class="legend"><span><span class="tier t1">Tier 1</span> DCが主な需要先で開示あり</span><span><span class="tier t2">Tier 2</span> DCを成長ドライバーの一つとして開示</span><span><span class="tier t3">Tier 3</span> 関連が弱い／開示なし</span><span class="tag">【報道ベース】【二次情報】＝会社資料で確認できていない</span></div>
+</header>
+
+<div class="note">
+  <b>この調査の限界（先に必ず読んでください）</b>
+  <ul>
+    <li><b>一次資料のPDF本文を1件も開けていません。</b>調査環境から会社IRサイト・TDnet・JPX・EDINETへの接続ができませんでした。数値は、検索エンジンが一次資料から抜き出した記述、または報道・集計サイトから取っています。URLは載せていますが、原本との照合はしていません。</li>
+    <li><b>有価証券報告書は、どの会社も確認できていません。</b>そのためD=5は「決算説明資料・補足資料・中計に数値がある（とされる）」ものに付けています。指定の基準より甘めです。</li>
+    <li><b>検索回数の上限に途中で達しました。</b>一部の会社は未検証です（最後の「調べきれなかった点」を参照）。</li>
+    <li>C（AIで増える度合い）は、会社の開示ではなく分析的な判断です。採点の考え方は各層の下に書いています。</li>
+    <li>11/10以降に発表される決算（フジクラ・SWCC・荏原・精工技研など）は反映していません。</li>
+  </ul>
+</div>
+
+<!-- ============ IT層 ============ -->
+<section>
+  <div class="layer">IT層</div>
+  <h2><span class="no">1</span>サーバー部品</h2>
+  <h3>半導体パッケージ基板とその材料</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>ICパッケージ基板</td><td class="co">イビデン（4062）</td><td class="n"><span class="tier t1">1</span></td><td class="n">4</td><td class="n">5</td><td class="n">4</td><td class="n">4</td><td class="n sum">17</td><td class="ev">2027/3期 中間期（2026-10-29開示）：売上2,625億円（+34.3%）、営業利益601億円（+84.6%）。増収要因は生成AIサーバー向け高機能ICパッケージ基板。通期は売上5,650億円・営業利益1,330億円に上方修正。電子事業の通期売上見通し3,850億円は全社の約68%（セグメント値からの計算）。AIサーバー向けの比率そのものは不明。会社Q&Aで「AIサーバー向けICパッケージ基板のシェアは70〜80%程度」。<br><a href="https://www.ibiden.co.jp/ir/items/kessannsetsumeiFY2025.pdf">決算説明資料（2026-05-12）</a> ／ <a href="https://www.ibiden.co.jp/ir/items/QA_FY2025Q3.pdf">Q&amp;A</a> ／ <a href="https://www.nikkei.com/nkd/disclosure/tdnr/20261028557691/">中間期短信</a></td></tr>
+    <tr><td>ABF（層間絶縁材）</td><td class="co">味の素（2802）</td><td class="n"><span class="tier t2">2</span></td><td class="n">1</td><td class="n">5</td><td class="n">4</td><td class="n">4</td><td class="n sum">14</td><td class="ev">Q1説明資料（2026-08-06）に「AI、サーバー、ネットワーク等 高性能基板向けABF好調」。中間期（2026-11-09）は全社売上8,311億円・事業利益1,086億円。ファンクショナルマテリアルズの中間期の数値は不明。全社売上に占めるDC比率は不明（食品が主体のため小さいと推定）。会社ページに「主要なパソコンでほぼ100%のシェア」（CPU用途。AI GPU用途のシェアは不明）。<br><a href="https://www.ajinomoto.co.jp/company/jp/rd/our_innovation/abf/">ABF紹介ページ</a> ／ <a href="https://www.release.tdnet.info/inbs/140120261106566777.pdf">中間期短信</a></td></tr>
+    <tr><td>ガラスクロス（T・NEガラス）</td><td class="co">日東紡績（3110）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n">3</td><td class="n sum">14</td><td class="ev">中間期（2026-11-05）：売上685億円、通期の営業利益予想を300→340億円に上方修正。会社資料に「NEガラス：データセンター向けに強い需要が継続」「TガラスはAI半導体パッケージ向けに能力増強」。DC売上比率は不明。Tガラスの「世界シェアほぼ独占」は<span class="tag">【報道ベース】</span>。<br><a href="https://www.nikkei.com/nkd/disclosure/tdnr/20261104564750/">中間期短信</a> ／ <a href="https://www.meti.go.jp/policy/economy/economic_security/semicon/nintei_anpohandoutai_keikaku_27.pdf">経産省 認定計画</a> ／ <a href="https://toyokeizai.net/articles/-/955113">東洋経済</a></td></tr>
+    <tr><td>極薄銅箔・電解銅箔</td><td class="co">三井金属（5706）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n sum">14</td><td class="ev">最新確認は2027/3期Q1（2026-08-07）：MicroThinとAIサーバー向け電解銅箔VSPの販売量が増加。機能材料の経常利益は27/3期予想780億円→31/3期目標1,300億円。売上に占める比率・世界シェアは不明。中間期は未確認。<br><a href="https://www.nikkei.com/article/DGXZQOUB076I80X00C26A8000000/">日経（Q1）</a> ／ <a href="https://eetimes.itmedia.co.jp/ee/articles/2608/24/news043.html">EE Times</a></td></tr>
+    <tr><td>後工程材料・HDメディア</td><td class="co">レゾナックHD（4004）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n sum">13</td><td class="ev">2026/12期 中間期（2026-08-06）：半導体・電子材料の売上2,990億円（+30%）、後工程材料1,600億円（+46%、主にAI向け先端パッケージ）。FY2025決算資料に「後工程売上に占めるAI向け比率は20%」（開示値）。全社売上ベースでは約5%と推定。Q3は11月中旬予定で未確認。<br><a href="https://www.resonac.com/system/files/2026-08/shiryo2026q2_0.pdf">中間期資料</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他（Tier 3・未検証）：</b>太陽HD（4626）、住友ベークライト（4203）、三菱ガス化学（4182）。新光電気は2025年に上場廃止。</p>
+
+  <h3>受動部品</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>MLCCほか</td><td class="co">村田製作所（6981）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n">5</td><td class="n sum">16</td><td class="ev">2027/3期 中間期（2026-10-30前後）：上期売上1兆908億円（+20.8%）、営業利益2,459億円（+48.9%）。<b>データセンター関連の通期売上予想を4,250億円に引き上げ（開示値）</b>。全社通期予想2兆2,600億円に対し約19%（計算値）。MLCC能力増強に5年で約1兆円。D=5は会社発信の数値によるが、原本PDFは未照合。<br><a href="https://eetimes.itmedia.co.jp/ee/spv/2611/02/news060_2.html">EE Times（2026-11-02）</a> ／ <a href="https://x.com/muRata_PR/status/2116033220278112339">村田公式X</a></td></tr>
+    <tr><td>MLCC</td><td class="co">太陽誘電（6976）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">3</td><td class="n">4</td><td class="n">3</td><td class="n sum">13</td><td class="ev">2027/3期Q2（2026-11-05）：Q2単体売上1,121億円（+20.8%）、営業利益134億円（+127.5%）、主因はAIサーバー向けコンデンサ。通期コンデンサ売上3,245億円（全社の約74%）、コンデンサのBBレシオ1.83。DC単独の比率は不明。<br><a href="https://eetimes.itmedia.co.jp/ee/articles/2611/06/news035.html">EE Times</a> ／ <a href="https://pdf.irpocket.com/C6976/Kdx3/m9oJ/McYR.pdf">会社資料</a></td></tr>
+    <tr><td>アルミ電解コンデンサ</td><td class="co">日本ケミコン（6997）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">4</td><td class="n">3</td><td class="n sum">12</td><td class="ev">最新確認はQ1（2026-08上旬）：営業利益16.7億円（前年同期比約11倍）、AIサーバー等のDC需要が寄与。新中計（2026〜28年度）に「AIサーバー向け 年平均成長率30%」。DC比率は不明。「AIサーバー1台に数千個」は<span class="tag">【報道ベース】</span>。<br><a href="https://edinetdb.jp/company/E01926/midterm-plans/">中計（edinetdb）</a> ／ <a href="https://finance.matsui.co.jp/news/618335/index">松井証券ニュース</a></td></tr>
+    <tr><td>受動部品・電源・HDDヘッド</td><td class="co">TDK（6762）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n sum">11</td><td class="ev">中間期（2026-10-30）：売上+31.9%、営業利益+41.0%。会社資料に「受動部品・電源：AIデータセンター及び自動車向けの販売増」「HDDヘッド・サスペンション：AIデータセンター向けHDD需要で増収」。DC比率は不明。<br><a href="https://www.tdk.com/system/files/20272q_1i3qdleu_ja.pdf">中間期資料</a></td></tr>
+    <tr><td>有機パッケージ・MLCC</td><td class="co">京セラ（6971）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n sum">11</td><td class="ev">中間期（2026-11-02）：売上1兆783億円（+8.8%）、営業利益656億円。AIデータセンター向け半導体パッケージと小型高容量MLCCが伸長。GaNで約295億円の減損。DC比率は不明。<br><a href="https://kyodonewsprwire.jp/release/202611029161">リリース</a> ／ <a href="https://news.mynavi.jp/techplus/article/20261103-5243332/">マイナビ</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他（Tier 3・未検証）：</b>ニチコン（6996）、指月電機（6994）。</p>
+
+  <h3>プリント基板・電源モジュール</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>プリント基板</td><td class="co">メイコー（6787）</td><td class="n"><span class="tier t3">3</span></td><td class="n" colspan="5">簡易評価</td><td class="ev">Q1（2026-08-06）は売上+38.0%、AIサーバー・衛星通信・車載の販売が拡大、営業利益率は10.5%→8.3%に低下。いずれも個人ブログ・まとめ記事経由で短信は未照合<span class="tag">【二次情報】</span>。DC比率は不明。<br><a href="https://www2.jpx.co.jp/disc/67870/140120260512526899.pdf">FY26/3 短信（JPX）</a></td></tr>
+    <tr><td>電源モジュール</td><td class="co">サンケン電気（6707）</td><td class="n"><span class="tier t3">3</span></td><td class="n" colspan="5">簡易評価</td><td class="ev">AIDCの空調・液冷向けGaN/SiC IPMを計画<span class="tag">【報道ベース】</span>（EE Times 2025-11）。1Qは経常赤字。上期は11/11発表予定。<br><a href="https://eetimes.itmedia.co.jp/ee/articles/2511/14/news060.html">EE Times</a></td></tr>
+    <tr><td>電源モジュール</td><td class="co">新電元工業（6844）</td><td class="n"><span class="tier t3">3</span></td><td class="n" colspan="5">簡易評価</td><td class="ev">上期（2026-11-09）は営業利益-46.3%。DCへの言及は確認できず。</td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他（未検証）：</b>日本CMK（6958）、コーセル（6905。確認できたのは「生成AI用GPU半導体製造装置向けの受注増」で、DC向け電源ではない）、FDK（6955）、タムラ製作所（6768）。</p>
+  <p class="others"><b>Cの考え方：</b>パッケージ基板と材料の需要は、ラック電力よりも「GPU・ASICの個数と1個あたりの面積・層数」で決まり、大型化・多層化で比例以上に伸びる。液冷・800VDCで置き換わる要素はないが、ガラスコア基板への移行で素材構成が変わる可能性がある（開示では未確認）。MLCCは電流に連動して増える。アルミ電解コンデンサとサーバー電源は、800VDCでAC→DC変換がラック外にまとまると、入力段の部品構成が変わる可能性があるため満点にしていない。</p>
+</section>
+
+<section>
+  <h2><span class="no">2</span>ストレージ</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>NAND・SSD</td><td class="co">キオクシアHD（285A）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">4</td><td class="n">3</td><td class="n">3</td><td class="n sum">13</td><td class="ev">2027/3期Q2（2026年7〜9月）：売上2兆4,800億円、うちSSD・ストレージ向け1兆6,160億円（約65%、計算値）。決算で「生成AI用途を中心とするデータセンター向け顧客の需要が旺盛で、平均販売単価が大幅に上昇」と説明。SSD・ストレージにはPC向けも含まれ、<b>DC単独の比率は不明</b>。数値は報道経由<span class="tag">【報道ベース】</span>。<br><a href="https://eetimes.itmedia.co.jp/ee/articles/2611/02/news034.html">EE Times（2026-11-02）</a> ／ <a href="https://www.sbbit.jp/article/st/187973">ビジネス+IT</a></td></tr>
+    <tr><td>HDDピボット・ボールベアリング・ファン</td><td class="co">ミネベアミツミ（6479）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">4</td><td class="n">2</td><td class="n">3</td><td class="n sum">11</td><td class="ev">FY26/3（2026-05-12）：PT部門はDC向けを中心にボールベアリングが堅調。経営陣は「DC向けベアリング需要が2022〜23年頃の3倍以上」と説明。AIサーバー関連売上は1,100億円（FY26/3）→2,000億円（FY29/3計画、ファン以外も含む）。HDDピボットアッセンブリーの世界シェア90%は日付不明の大和IR資料<span class="tag">【二次情報】</span>。<br><a href="https://eetimes.itmedia.co.jp/ee/articles/2605/13/news096.html">EE Times</a> ／ <a href="https://www.daiwair.co.jp/e-cast_files/6894/pdf/meeting_memo_pdf.pdf">大和IR資料</a></td></tr>
+    <tr><td>HDDヘッド・サスペンション</td><td class="co">TDK（6762）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n sum">11</td><td class="ev">中間期資料に「AIデータセンター向けHDD需要でHDDヘッド・サスペンションが増収・収益改善」。セグメントの今期数値は不明。</td></tr>
+    <tr><td>HDメディア</td><td class="co">レゾナックHD（4004）</td><td class="n"><span class="tier t2">2</span></td><td class="n">1</td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n sum">10</td><td class="ev">2025/12期Q3資料（2025-11-13）に「HDメディアはデータセンター向け需要回復で数量増」。売上・シェアは不明。<br><a href="https://www.resonac.com/sites/default/files/2025-11/shiryo2025q3.pdf">Q3資料</a></td></tr>
+    <tr><td>HDD用ガラス基板</td><td class="co">HOYA（7741）</td><td class="n"><span class="tier t3">3</span></td><td class="n" colspan="5">簡易評価</td><td class="ev">中間期（2026-10-30）の連結売上5,159億円。DC・HDD基板の内訳は確認できず。「DCブームでHDD用ガラス基板の受注が埋まる」は集計サイトの論評<span class="tag">【二次情報】</span>。<br><a href="https://www.hoya.com/wp-content/uploads/2026/08/FY26-Q1-Transcript_J.pdf">Q1 書き起こし</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他（未検証）：</b>東洋鋼鈑（5453、HDD用アルミ基板。2026年の数値は確認できず）、ニデック（6594、HDDモーター。会計問題あり＝冷却の項を参照）、富士フイルムHD（4901、LTOテープ）、ニッパツ（5991、HDDサスペンション）。</p>
+  <p class="others"><b>Cの考え方：</b>HDD・SSDの需要はラック電力ではなくデータ量に連動するため、Cは中位とした。</p>
+</section>
+
+<section>
+  <h2><span class="no">3</span>ネットワーク</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>光ファイバ・ケーブル・光部品</td><td class="co">フジクラ（5803）</td><td class="n"><span class="tier t1">1</span></td><td class="n">5</td><td class="n">5</td><td class="n">4</td><td class="n">4</td><td class="n sum">18</td><td class="ev">FY3/26（短信 2026-05-14）：情報通信事業部門の売上6,530億円（+44.7%）、営業利益1,527億円（+65.7%）、理由は「生成AIの普及・拡大を背景としたDC向け需要の伸長」。全社1兆1,823億円に対し約55%（計算値）。Q1 FY3/27（2026-08-07）：情報通信の売上2,644億円（+83.9%）、営業利益980億円（+188.3%）。<b>DC向け売上の金額そのものは不明</b>。中間期は11/10発表予定で未反映。<br><a href="https://www2.jpx.co.jp/disc/58030/081220260514532598_tse-acedjpsm-58030-20260514358030-ixbrl.htm">FY3/26短信</a> ／ <a href="https://www2.jpx.co.jp/disc/58030/081220260806513575_tse-qcedjpsm-58030-20260807358030-ixbrl.htm">Q1短信</a></td></tr>
+    <tr><td>光ファイバ・ケーブル（＋液冷）</td><td class="co">古河電気工業（5801）</td><td class="n"><span class="tier t1">1</span></td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n sum">16</td><td class="ev">経営方針（2026-05-19）：FY2030の営業利益目標2,500億円のうちDC関連事業で2,000億円（FY25比8.5倍）。中間期（2026-11-09）：売上7,376.9億円（+20.8%）、営業利益576億円、光ソリューションの売上1,309億円（+43.9%）、通期の光ソリューション利益を530億円に引き上げ。子会社の白山はMTフェルールで世界シェア2位（自社リリース）。<br><a href="https://www.furukawaelectric.com/ir/library/mid_briefing/pdf/2026/20260519_management_pre.pdf">経営方針</a> ／ <a href="https://www.media-ir.com/news/?p=187654">中間期（集計）</a></td></tr>
+    <tr><td>光コネクタ部品・研磨機</td><td class="co">精工技研（6834）</td><td class="n"><span class="tier t1">1</span></td><td class="n">5</td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n sum">16</td><td class="ev">FY3/27計画（FISCOレポート 2026-06）：光製品関連の売上235億円が全社340億円の約69%。Q1：光製品関連+91.7%。2026-08-10に上方修正、理由は「AI DC投資拡大による光コネクタ受注増」（修正後の数値は未確認）。中間期は11/13発表予定。<br><a href="https://www.fisco.co.jp/wordpress/wp-content/uploads/FISCO/seikoh-giken20260617.pdf">FISCOレポート</a></td></tr>
+    <tr><td>光配線・光ケーブル・光デバイス</td><td class="co">住友電気工業（5802）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n sum">15</td><td class="ev">FY3/26：情報通信の売上3,266億円（+46.3%）、理由は「DC向け光配線製品・光ケーブル・光デバイスの需要増」。全社5兆1,102億円の約6.4%（計算値）。出典はX投稿の要約で確度は低め。中間期（2026-10-30）：売上2兆7,649億円、営業利益2,195.67億円、通期を上方修正。情報通信の中間期数値は不明。<br><a href="https://www.release.tdnet.info/inbs/140120261029559548.pdf">中間期短信</a></td></tr>
+    <tr><td>光部品（光モニタ）・光測定器</td><td class="co">santec Holdings（6777）</td><td class="n"><span class="tier t1">1</span></td><td class="n">4</td><td class="n">3</td><td class="n">4</td><td class="n">3</td><td class="n sum">14</td><td class="ev">中間期（2026-11-06）：通期予想を売上370→500億円、営業利益120→180億円に引き上げ。理由は「生成AI普及に伴うDC向け光通信需要の拡大」。セグメント別の数値・DC比率は不明。<br><a href="https://www.media-ir.com/news/?p=187587">中間期（集計）</a></td></tr>
+    <tr><td>光部品（EMLレーザー）</td><td class="co">三菱電機（6503）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n sum">14</td><td class="ev">半導体・デバイス事業説明会（2026-05-29）：光デバイス売上をFY25の400億円からFY30に800億円へ、EMLチップ能力をFY29までにFY25比3倍超、CPO向け品揃えも強化。FY3/26 Q3にDC向け通信用光デバイスの受注+49%。<br><a href="https://www.mitsubishielectric.co.jp/ja/pr/2026/pdf/0529_co5.pdf">事業説明会資料</a></td></tr>
+    <tr><td>光ファイバ（e-Ribbon）・電線</td><td class="co">SWCC（5805）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n sum">12</td><td class="ev">FY3/26中間期の補足資料（2025-11-12）に「DC向けe-Ribbon®が好調」。Q1 FY3/27：売上777億円（+24.9%）。DC向け売上の金額は不明。中間期は11/11発表予定。<br><a href="https://www.swcc.co.jp/jpn/ir/pdf/IR_presentation260612.pdf">スモールミーティング資料（2026-06-12）</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>Tier 3（簡易）：</b>湖北工業（6524、10点。DCを理由に挙げたのはリード端子で、光部品は海底ケーブル案件）、アンリツ（6754、10点。DC・1.6T関連の開示は確認できず）、住友大阪セメント（5232、9点。光電子事業の売上27.32億円・赤字）、京セラ（6971、9点。トランシーバ用セラミックパッケージ、DC売上不明）、NTT（9432、9点。光電融合スイッチ計画、売上不明）、NEC（6701、9点。海底ケーブル）、日本航空電子（6807、6点。DC開示なし）。<b>未確認：</b>ヒロセ電機、I-PEX（LIGHTPASSサンプル供給のみ）、日本電気硝子、浜松ホトニクス、富士通。光トランシーバ完成品で、日本の上場企業が主要供給者だと開示で確認できた例はなし。</p>
+  <p class="others"><b>Cの考え方：</b>GPU1個あたりの光リンク数が増え、スケールアウト・DC間接続も増えるため、ファイバ・多心コネクタは比例以上に伸びやすい。CPO（光電一体パッケージ）が広がると、プラガブル型トランシーバの部品（EMLなど）は置き換わる可能性がある。CPOでもファイバ・多心コネクタ・FAUは引き続き必要。CPO比率は2026年1%未満→2030年35%超という調査会社の予測あり（<a href="https://www.idtechex.com/ja/research-report/co-packaged-optics-cpo-2026-2036-technologies-market-and-forecasts/1338">IDTechEx</a>、確度は低）。</p>
+</section>
+
+<!-- ============ 電力層 ============ -->
+<section>
+  <div class="layer">電力層</div>
+  <h2><span class="no">4</span>受電・変電</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>変圧器・受変電（Hitachi Energy）</td><td class="co">日立製作所（6501）</td><td class="n"><span class="tier t2">2</span></td><td class="n">4</td><td class="n">5</td><td class="n">4</td><td class="n">3</td><td class="n sum">16</td><td class="ev">上期決算（2026-10-28）：Energyセグメントの7〜9月受注1兆5,662億円（+47%、欧州HVDCとDC需要）、Hitachi Energyの受注残10.5兆円。経営陣が「DCはHitachi Energy売上の10%強」と発言（電話会議の書き起こしを第三者経由で確認）。800VDC支持のプレス（2025-10）。<br><a href="https://www.hitachi.com/content/dam/hitachi/global/ja_jp/press/files/2026/10/1028/2026_2Q.pdf">上期短信</a> ／ <a href="https://www.investing.com/news/company-news/hitachi-q2-fy2026-slides-record-results-drive-second-guidance-raise-93CH-4977988">Investing.com</a> ／ <a href="https://www.hitachienergy.com/jp/ja/news-and-events/press-releases/2025/10/nvidia-800-vdc-collaboration">800VDCプレス</a></td></tr>
+    <tr><td>受変電・UPS</td><td class="co">富士電機（6504）</td><td class="n"><span class="tier t2">2</span></td><td class="n">4</td><td class="n">4</td><td class="n">3</td><td class="n">5</td><td class="n sum">16</td><td class="ev">1Q説明資料（2026-07-30）のQ&amp;Aで、<b>FY26のDC関連売上を約1,000億円と見込む</b>（通期売上予想1兆3,500億円の約7%、計算値）。受注増600億円の大半はDC事業者向け。UL認証を2026年7月に取得、北米DC受注は「まだ小さい」。上期（2026-10-29）：売上5,933億円（+9.2%）、営業利益598億円（+39.9%）。<br><a href="https://www.fujielectric.com/common-resource-gl/ir/data/20260730_2.pdf">1Q説明資料</a></td></tr>
+    <tr><td>大形変圧器</td><td class="co">ダイヘン（6622）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n">3</td><td class="n sum">14</td><td class="ev">決算説明会資料（2026-06-05）に「国内一般向けは再エネとデータセンター向けが増加」。上期短信（2026-11-05）：受注1,813億円（+43.2%）、エネルギーマネジメント受注973億円（+33.1%、大形変圧器と系統用蓄電池、DC新増設が背景）。三重の新工場は2026年10月完成予定。DC向けの金額は不明。<br><a href="https://www.daihen.co.jp/ir/ir_pdf/setsumeikai_2026_0605.pdf">説明会資料</a> ／ <a href="https://www.release.tdnet.info/inbs/140120261104564185.pdf">上期短信</a></td></tr>
+    <tr><td>変電設備</td><td class="co">明電舎（6508）</td><td class="n"><span class="tier t3">3</span></td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n">2</td><td class="n sum">13</td><td class="ev">上期（2026-10-30）：売上1,537.6億円（+17.2%）、営業利益97.6億円（+249.5%）、要因は国内外の変電需要。DC向けの数値は会社資料で確認できず。<br><a href="https://finance.yahoo.co.jp/quote/6508.T/financials">Yahoo!ファイナンス（短信要約）</a></td></tr>
+    <tr><td>特高受変電</td><td class="co">東光高岳（6617）</td><td class="n"><span class="tier t3">3</span></td><td class="n">3</td><td class="n">3</td><td class="n">4</td><td class="n">2</td><td class="n sum">12</td><td class="ev">上期（2026-10-30）：売上499.6億円（+3.2%）。補足資料で確認できたのは蓄電所向けの大型受注まで。DC向けは不明。<br><a href="https://www.release.tdnet.info/inbs/140120261030560495.pdf">上期短信</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他：</b>正興電機製作所（6653、Tier 2。3Qの増収要因に「データセンター・蓄電所向け設備の堅調」）、愛知電機（6623、Tier 3。会社は「大型変圧器は既設更新が中心で横ばい」）、戸上電機製作所（6643、Tier 3。DC言及なし）。</p>
+</section>
+
+<section>
+  <h2><span class="no">5</span>配電</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>パワー半導体（SiC・GaN）</td><td class="co">ローム（6963）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">3</td><td class="n">5</td><td class="n">4</td><td class="n sum">15</td><td class="ev">決算説明会（2026-05-13）で「C&amp;S（AIサーバー電源）のFY26売上は前年比2.5倍を計画」。1QのC&amp;Sは193億円（+30.4%、AIサーバー以外も含む）、「生産能力を超える受注」。上期（2026-11-05）：売上2,794億円（+14.4%）、増収要因にC&amp;S市場。NVIDIAと800VDCで協業を発表（2025-06）。<br><a href="https://fscdn.rohm.com/jp/financial/account/2603_presentation_jp.pdf">決算説明会資料</a> ／ <a href="https://fscdn.rohm.com/jp/financial/account/2606_supplementary_jp.pdf">1Q補足</a></td></tr>
+    <tr><td>電力ケーブル</td><td class="co">住友電気工業（5802）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">4</td><td class="n">3</td><td class="n">3</td><td class="n sum">13</td><td class="ev">上期短信要約に「環境エネルギーはデータセンタ需要を背景に電力ケーブルが堅調」。電力ケーブルのDC金額は不明（DCの主役は光配線）。<br><a href="https://finance.yahoo.co.jp/quote/5802.T/financials">Yahoo!ファイナンス</a></td></tr>
+    <tr><td>電力ケーブル・光</td><td class="co">SWCC（5805）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n sum">12</td><td class="ev">スモールミーティング資料（2026-06-12）に「DC向け売上の予想CAGR24%」（金額・期間は図から読めず不明、光も含む）。</td></tr>
+    <tr><td>分電盤・ラック・PDU</td><td class="co">日東工業（6651）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n sum">12</td><td class="ev">上期（2026-11-09）：売上981.1億円（+10.3%）、営業利益72.4億円（+36.8%）、「データセンター関連部材などが伸長」。DC比率は不明。<br><a href="https://finance.yahoo.co.jp/quote/6651.T/financials">Yahoo!ファイナンス</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他：</b>三社電機製作所（6882、Tier 2。「AI・DC関連の設備投資でインバーター用途が伸長」<span class="tag">【報道ベース】</span>）、古河電工・フジクラ（電力ケーブルのDC開示なし、Tier 3）、新電元・サンケン（上記）。</p>
+</section>
+
+<section>
+  <h2><span class="no">6</span>非常用電源</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>ガスタービン</td><td class="co">三菱重工業（7011）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">5</td><td class="n">4</td><td class="n">3</td><td class="n sum">15</td><td class="ev">FY25本決算資料（2026-05-12）で、ガスタービン市場の成長要因にDCを明記。上期（2026-11-06）：受注3兆6,125億円（+9%）、エナジーの受注残8兆640億円。「GT需要の約20%がDC」は二次情報のため不採用。<br><a href="https://www.mhi.com/jp/finance/library/result/pdf/fy20254q/presentation.pdf">FY25決算資料</a> ／ <a href="https://news.mynavi.jp/techplus/article/20261106-5267806/">マイナビ</a></td></tr>
+    <tr><td>UPS・蓄電池</td><td class="co">GSユアサ（6674）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">4</td><td class="n">3</td><td class="n">3</td><td class="n sum">13</td><td class="ev">上期（2026-11-06）：売上3,002億円（+10.3%）、産業電池電源で「ESS・AIDC向け売上増」（開発費前倒しで減益）。用途別の金額は不明。</td></tr>
+    <tr><td>UPS（SANUPS）</td><td class="co">山洋電気（6516）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">3</td><td class="n">2</td><td class="n">3</td><td class="n sum">11</td><td class="ev">上期（2026-10-29）：売上660.2億円（+30%）、営業利益89.6億円（+84.7%）。短信に「SANUPSはDC向けサーバ等の需要堅調」。DC比率は不明。<br><a href="https://www.release.tdnet.info/inbs/140120261028557469.pdf">上期短信</a></td></tr>
+    <tr><td>ガスタービン・ガスエンジン</td><td class="co">川崎重工業（7012）</td><td class="n"><span class="tier t3">3</span></td><td class="n">2</td><td class="n">3</td><td class="n">4</td><td class="n">1</td><td class="n sum">10</td><td class="ev">会長が「GTの引き合いがDC向けで活発」と発言<span class="tag">【報道ベース】</span>。上期は未確認。</td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他（Tier 3）：</b>デンヨー（6517、米国売上構成比31.1%、DC用途の記載なし）、IHI（7013）、AIRMAN（旧北越工業 6364）。富士電機のUPSは「4 受電・変電」の行に含む。<b>除外：</b>日本ガイシ（NAS電池の製造販売終了を決定、2025-10-31）、古河電池（TOB成立で上場廃止見込み）。</p>
+</section>
+
+<section>
+  <h2><span class="no">7</span>800V直流（800VDC）</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>800VDC給電アーキテクチャ・電源システム</td><td class="co">三菱電機（6503）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">4</td><td class="n">5</td><td class="n sum">14</td><td class="ev">「インフラビジネスエリア2026」（2026-05-29）で、DC関連事業の売上を25年度400億円→30年度800億円、「DC800V給電アーキテクチャの売上も含む」と開示（資料内に「30年度0.4兆円」の別表記があり要確認）。鴻海とMoU（2025-11-06）。DC関連は全社売上の約1%未満（計算値）。<br><a href="https://www.mitsubishielectric.co.jp/ja/pr/2026/pdf/0529_co2.pdf">事業説明資料</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>関連（他の項で評価）：</b>ローム（NVIDIAと800VDCで協業、ホワイトペーパー2025-10）、日立／Hitachi Energy（800VDC支持のプレス2025-10）。<b>不明：</b>TDK・村田・富士電機の800VDC関連（根拠を確認できず）。</p>
+  <p class="others"><b>電力層のCの考え方：</b>特高・受変電・大形変圧器・ガスタービンは、ラック密度ではなく施設の総MWに比例し、密度が上がるとサイトあたりのMWと受電電圧が上がる。800VDCでも中高圧のAC受電は残る。SiC・GaNは800VDCの整流器・DC/DC変換に入り、搭載量が電力より速く増える。一方、従来型のAC二重変換UPSと鉛蓄電池、低圧ACスイッチギア、54Vのラック内バスバー、ラック内のAC/DC電源は置き換えのリスクがある。電力ケーブルは、NVIDIAが800VDCで銅使用量を最大45%減らせると主張しており、MWあたりの銅量は減る。</p>
+</section>
+
+<!-- ============ 冷却層 ============ -->
+<section>
+  <div class="layer">冷却層</div>
+  <h2><span class="no">8</span>空冷（排熱を含む）</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>CRAH・ファンウォール・チラー</td><td class="co">ダイキン工業（6367）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n">5</td><td class="n sum">16</td><td class="ev">データセンタ事業戦略説明会（2025-11-27）：北米DC冷却の売上は2025年度約1,000億円→2030年度3,000億円以上（Chilldyne・DDCを含む）。会社自身が「冷却の20〜30%は液冷などに置き換わる」と説明。米国の報告書は「2030年度 約33億ドル」で、目標と食い違い（要確認）。連結に占めるDC比率は約2%（推定）。<br><a href="https://www.daikin.co.jp/-/media/Project/Daikin/daikin_co_jp/investor/data/others/20251127-DC-Strategy/script.pdf">説明会スクリプト</a> ／ <a href="https://www.northamerica-daikin.com/assets/files/2026-daikin-u-s-business-and-innovation-report.pdf">米国報告書</a></td></tr>
+    <tr><td>チラー・冷却塔・ポンプ</td><td class="co">荏原製作所（6361）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n sum">13</td><td class="ev">決算説明資料（2026-08-14）に「産業市場ではデータセンター、半導体関連の受注が増加」。IR Day（2025-11-18）で北米DC向け「シェア6%台、10年後に倍増を目指す」。DC売上比率は不明。次回決算は11/13予定。<br><a href="https://www.ebara.com/content/dam/ebara/grand-masters/entities/ja/pdf/ir/library/earnings/briefings-documents/2026/162_q2_presentation_jp.pdf">決算説明資料</a></td></tr>
+    <tr><td>空調機（AHU）</td><td class="co">新晃工業（6458）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">3</td><td class="n">2</td><td class="n">5</td><td class="n sum">13</td><td class="ev">決算補足説明資料（2026-05-14）：DC向け売上（単体・国内）約24億円→約40億円（2026/3期）、単体国内売上286億円の約14%（計算値）。国内DC向け空調機のシェアはSTULZ約40%、新晃約10%（会社スポンサー付きレポート）。2027/3期上期は減収減益予想。<br><a href="https://www.nikkei.com/markets/ir/irftp/data/tdnr/tdnetg3/20260514/fxax5k/140120260513529496.pdf">決算補足資料</a> ／ <a href="https://www.nomura-ir.co.jp/ja/qnresearch/report_6458/main/00/teaserItems1/00/link/qnresearch_6458.pdf">野村IRレポート</a></td></tr>
+    <tr><td>ファンウォール・直膨・チラー</td><td class="co">三菱電機（6503）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">4</td><td class="n">3</td><td class="n sum">12</td><td class="ev">DC関連事業で2030年度売上4,000億円、冷却は2025年度約320億円→2030年度1,000億円超<span class="tag">【報道ベース】</span>。米オハイオ州の新会社に約50億円投資、2027年4月生産開始（2026-07-30リリース）。<br><a href="https://cloud.watch.impress.co.jp/docs/news/2148292.html">クラウドWatch</a> ／ <a href="https://prtimes.jp/main/html/rd/p/000000426.000120285.html">リリース</a></td></tr>
+    <tr><td>サーバー・ネットワーク機器用ファン</td><td class="co">山洋電気（6516）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">3</td><td class="n">2</td><td class="n">3</td><td class="n sum">11</td><td class="ev">クーリングシステム部門の2026年4〜6月売上116.4億円（+19.6%）<span class="tag">【二次情報】</span>。DC売上比率は不明。液冷の普及でファン需要が減る指摘あり。</td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他：</b>三菱重工業（7011、Tier 2・参考11点。10MW級ターボ冷凍機、NVIDIA「AIファクトリー」の電力・冷却パートナーに参加 2026-07-16、DC冷却の内訳は不明）、ミネベアミツミ（6479、ファン。上記）、木村工機（6231、Tier 3）、パナソニックHD（6752、Tier 3。欧州でCDU・チラー受注開始 2026-03-04）、住友精密工業（6355、Tier 3<span class="tag">【報道ベース】</span>）、日立（DC向けチラー「AIXROSS」2027年4月受注開始）。</p>
+</section>
+
+<section>
+  <h2><span class="no">9</span>液冷</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>コールドプレート（水冷モジュール）</td><td class="co">古河電気工業（5801）</td><td class="n"><span class="tier t1">1</span></td><td class="n">3</td><td class="n">4</td><td class="n">5</td><td class="n">4</td><td class="n sum">16</td><td class="ev">リリース（2026-03-30）：水冷モジュール売上を2027年度1,000億円以上、2030年度4,000億円へ。投資約550億円、タイで2027年1月から量産。量産時期の記載が資料ごとに異なる（2026年6月／9月／2027年1月）。<br><a href="https://www.furukawaelectric.com/release/2026/kei_20260330.pdf">リリース</a></td></tr>
+    <tr><td>CDU・コールドプレート</td><td class="co">ニデック（6594）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">4</td><td class="n">5</td><td class="n">2</td><td class="n sum">13</td><td class="ev">水冷事業を2031年3月期に1,000億円以上（2026年3月期の約5倍）、CDU月産3,000→5,000台<span class="tag">【報道ベース】</span>。<b>2026年3月期は最終赤字5,646億円、監査法人が意見不表明、東証の特別注意銘柄に指定</b>（2026-09-30）。<br><a href="https://newswitch.jp/p/49459">ニュースイッチ</a> ／ <a href="https://eetimes.itmedia.co.jp/ee/articles/2609/30/news111.html">EE Times</a></td></tr>
+    <tr><td>液冷配管の継手（クイックカプラ）</td><td class="co">日東工器（6151）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">5</td><td class="n">3</td><td class="n sum">13</td><td class="ev">中間決算説明会Q&amp;A（2025-12-02）で「データセンターの冷却用途に当社カプラが採用」。液冷配管用カプラを2026-09-01発売、年間目標10,000セット。2026年3月期は営業利益11億円（-49.5%）。DC比率は不明。<br><a href="https://ssl4.eir-parts.net/doc/6151/tdnet/2813919/00.pdf">決算短信</a> ／ <a href="https://www.nitto-kohki.co.jp/news/cms-assets/CZL_brass_web.pdf">新製品資料</a></td></tr>
+    <tr><td>CDU・マニホールド（買収）</td><td class="co">ダイキン工業（6367）</td><td class="n"><span class="tier t2">2</span></td><td class="n">1</td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n sum">12</td><td class="ev">Chilldyne（負圧方式の直接液冷）とDDC Solutions を買収、3,000億円目標に含む。液冷単独の売上は不明。<br><a href="https://www.prnewswire.com/news-releases/daikin-applied-expands-data-center-offering-with-acquisition-of-chilldyne-302603220.html">PR Newswire</a></td></tr>
+    <tr><td>CDU（750kW〜1.2MW級）</td><td class="co">三菱電機（6503）</td><td class="n"><span class="tier t2">2</span></td><td class="n">1</td><td class="n">3</td><td class="n">5</td><td class="n">3</td><td class="n sum">12</td><td class="ev">ME-CDUを米国の新工場で生産予定（2026-07-30）。液浸冷却は自社に無い分野としてM&amp;A・協業を検討<span class="tag">【報道ベース】</span>。CDU単独の売上は不明。<br><a href="https://www.datacenterdynamics.com/en/news/mitsubishi-launches-12mw-liquid-cooling-cdu/">DCD</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他（Tier 3）：</b>日立（GPU用コールドプレートを発表、試作段階 2026-10-21）、三桜工業（6584、止水継手）、三菱重工（CDU・液浸）、フジクラ（サーマルの数値なし）。液浸冷却液：ENEOS HD（5020）、出光興産（5019）、コスモエネルギーHD（5021）、AGC（5201、フッ素系冷媒の国際認定 2026-06-02）。いずれも販売実績は不明。<b>除外（根拠なし）：</b>ティラド、鶴見製作所、酉島製作所など。</p>
+  <p class="others"><b>冷却層のCの考え方：</b>ラックの発熱が数十kW→100kW超→1MWと上がると、液冷部品（コールドプレート、CDU、継手、施設側の熱交換器・ポンプ）は発熱以上に増える。部屋全体を空気で冷やす機器（CRAH・AHU）とサーバーファンは、1kWあたりの取り分が減るため減点した。チラー・冷却塔は冷やす熱量に比例して増えるが、40℃超の温水で冷やす液冷が広がるとチラーの稼働が減る逆風がある（日立は冷却電力3割減と試算、2026-10-21）。</p>
+</section>
+
+<!-- ============ 建物・運営層 ============ -->
+<section>
+  <div class="layer">建物・運営層</div>
+  <h2><span class="no">10</span>建設・設備工事</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>電気・空調設備工事</td><td class="co">日比谷総合設備（1982）</td><td class="n"><span class="tier t1">1</span></td><td class="n">5</td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n sum">16</td><td class="ev">FACTBOOK（2026/3期、2026-05-13）に用途別「データセンター/情報」区分。2027/3期1Q受注560.88億円は前年同期の3.4倍、要因は「DC案件複数獲得」<span class="tag">【報道ベース】</span>。うちDC/情報419億円（単体）は<span class="tag">【二次情報・未検証】</span>。Tierは暫定。<br><a href="https://www.hibiya-eng.co.jp/ja/ir/news/auto_20260513528099/pdfFile.pdf">FACTBOOK</a></td></tr>
+    <tr><td>電気通信・設備工事</td><td class="co">ミライト・ワン（1417）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">3</td><td class="n">4</td><td class="n">5</td><td class="n sum">15</td><td class="ev">記者発表資料（2026-05-12）：DC事業受注460億円、2026年度のDC受注目標を650億円→1,000億円に上方修正。全社受注6,587億円の約7%（目標ベースで約15%、計算値）。460億円がどの年度の実績かは資料により読み方が分かれる。<br><a href="https://www.mirait-one.com/info/attachment/c1c54a513c0a71c2ee4e9ad560250a758ff303d9.pdf">記者発表資料</a></td></tr>
+    <tr><td>空調設備工事</td><td class="co">高砂熱学工業（1969）</td><td class="n"><span class="tier t2">2</span></td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n sum">15</td><td class="ev">1Q決算説明資料（2026-08-05）に用途別「データセンター」の項目あり（数値は抽出できず＝不明）。単体1Q受注1,065億円、2027/3期の受注予想5,200億円（+13%）。<br><a href="https://www.release.tdnet.info/inbs/140120260804508492.pdf">1Q資料</a></td></tr>
+    <tr><td>ゼネコン</td><td class="co">清水建設（1803）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">4</td><td class="n">3</td><td class="n">4</td><td class="n sum">13</td><td class="ev">1Q説明会Q&amp;A（2025-07）：DC受注は1Qで数件・200〜300億円、FY24は800〜1,000億円程度。「通期予想は用途別に集計していない」。<br><a href="https://pdf.irpocket.com/C1803/bffO/GcNS/IzA3.pdf">Q&amp;A要旨</a></td></tr>
+    <tr><td>ゼネコン</td><td class="co">鹿島建設（1812）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">4</td><td class="n">3</td><td class="n">3</td><td class="n sum">12</td><td class="ev">2026年5月の説明会の質疑要旨とされる記述：DC受注は年間500億円程度、2025年度は600億円程度（原本未確認）。1Q資料（2026-08-05）に「東南アジアのDC工事を受注」。<br><a href="https://www.kajima.co.jp/ir/assets/static/ir/ir_newest_report/presentation-20260805-text-j.pdf">1Q説明</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他 Tier 2：</b>エクシオグループ（1951、「大規模DC構築の受注好調」）、三機工業（1961）、ダイダン（1980、DC単独は「答えられない」）、大気社（1979）、朝日工業社（1975）、新日本空調（1952<span class="tag">【二次情報】</span>）、関電工（1942<span class="tag">【報道ベース】</span>）、クラフティア（旧九電工 1959<span class="tag">【二次情報】</span>）、大林組（1802、「DC需要継続、一部計画中止・延期」）。<b>Tier 3：</b>大成建設、きんでん、トーエネック、戸田建設、安藤ハザマ、日本コムシス、テクノ菱和。<b>除外：</b>住友電設（大和ハウスのTOB成立で上場廃止見込み）。</p>
+</section>
+
+<section>
+  <h2><span class="no">11</span>不動産・運営</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>DC運営・GPUクラウド</td><td class="co">さくらインターネット（3778）</td><td class="n"><span class="tier t1">1</span></td><td class="n">5</td><td class="n">3</td><td class="n">5</td><td class="n">5</td><td class="n sum">18</td><td class="ev">2027/3期2Q短信・説明資料（2026-10-28）：中間売上228.27億円（+46.0%）、うちGPUインフラ101.24億円（+258.9%）で全体の約44%。通期予想を売上466億円、GPU売上208.5億円、営業利益41億円に上方修正。<br><a href="https://www.sakura.ad.jp/corporate/wp-content/uploads/2026/10/261028-ir_1.pdf">短信</a> ／ <a href="https://www.sakura.ad.jp/corporate/wp-content/uploads/2026/10/261028-ir_2.pdf">説明資料</a></td></tr>
+    <tr><td>DC運営（NTTデータ）</td><td class="co">日本電信電話（9432）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">4</td><td class="n">4</td><td class="n">5</td><td class="n sum">15</td><td class="ev">NTTデータG 2026年度上期：DC事業売上2,166億円（+54.3%）、営業利益191億円（-9.5%）<span class="tag">【報道経由】</span>。NTT連結の上期営業収益7兆3,622億円の約2.9%（計算値）。2026年度計画はDC売上5,440億円。<br><a href="https://cloud.watch.impress.co.jp/docs/news/2153698.html">クラウドWatch</a> ／ <a href="https://news.mynavi.jp/techplus/article/20261106-5267995/">マイナビ</a></td></tr>
+    <tr><td>DC運営（Telehouse）</td><td class="co">KDDI（9433）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">4</td><td class="n">4</td><td class="n sum">13</td><td class="ev">2026年度上期（2026-11-06）：DC売上577億円（+18.2%）、連結3.05兆円の約1.9%（計算値）<span class="tag">【報道経由】</span>。DC売上を2031/3期に2,000億円へ<span class="tag">【報道ベース】</span>。<br><a href="https://news.mynavi.jp/techplus/article/20261106-5269956/">マイナビ</a></td></tr>
+    <tr><td>DC開発</td><td class="co">三井不動産（8801）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">4</td><td class="n">3</td><td class="n sum">12</td><td class="ev">ロジスティクス戦略（2026-07-23）：2035年度までにDCへ累計6,000億円超を投資、稼働3棟・建設中7棟。インドで約200MWのDC事業に参画。DCの売上は不明。<br><a href="https://www.mitsuifudosan.co.jp/corporate/news/2026/0512_02/">リリース</a></td></tr>
+    <tr><td>DC運営</td><td class="co">ブロードバンドタワー（3776）</td><td class="n"><span class="tier t1">1</span></td><td class="n">4</td><td class="n">2</td><td class="n">2</td><td class="n">3</td><td class="n sum">11</td><td class="ev">2026/12期中間：売上62.99億円（-2.1%）、減収理由に「DCにおける解約」。DC売上約48億円（FY2025）で連結の約31%<span class="tag">【二次情報】</span>。<br><a href="https://www.bbtower.co.jp/ir/pdf/accounting/2026_2fb.pdf">中間説明資料</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他 Tier 2：</b>IIJ（3774、海外GPU基盤構築の大型案件約170億円、DC単独の売上は不明）、ソフトバンク（9434、AI計算基盤1,220億円＋AIデータセンター1,350億円、堺140MW・苫小牧50MW）、三菱商事（8058、MCデジタル・リアルティで国内約220MW）、三菱地所（8802、1.5兆円・2,500MW<span class="tag">【報道ベース】</span>）、東京建物（8804）、東急不動産HD（3289、石狩の再エネDC 15MW、GMO・BBTが入居）。<b>Tier 3：</b>野村不動産HD、大和ハウス、住友商事、産業ファンド投資法人、データセクション。<b>除外：</b>オリックス、日本プロロジスリート、GLP投資法人。</p>
+</section>
+
+<section>
+  <h2><span class="no">12</span>電力供給</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>電力（送配電）</td><td class="co">東京電力HD（9501）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">5</td><td class="n">4</td><td class="n">4</td><td class="n sum">15</td><td class="ev">東電PG資料（総務省 官民懇談会）：DC託送申込（容量仮確保）累計約950万kW（2025/3時点）。2026/3末は約1,790万kWだが、2030年までに供給開始する分は448万kW<span class="tag">【報道ベース】</span>。送配電収入はレベニューキャップ制。<br><a href="https://www.soumu.go.jp/main_content/001006329.pdf">総務省資料</a></td></tr>
+    <tr><td>電力・DC事業</td><td class="co">関西電力（9503）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n sum">14</td><td class="ev">リリース（2023-05-22）：CyrusOneと折半出資の新会社で10年程度に1兆円以上投資、受電900MWを目指す。2025年度決算説明で販売電力量予想を1,522億→1,628億kWhに。DC分の内訳は不明。<br><a href="https://www.kepco.co.jp/corporate/pr/2023/pdf/20230522_1j.pdf">リリース</a></td></tr>
+    <tr><td>電力</td><td class="co">北海道電力（9509）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">4</td><td class="n">4</td><td class="n">3</td><td class="n sum">13</td><td class="ev">北電ネットワークの供給計画でDC需要対応の変電所新設<span class="tag">【報道ベース】</span>。北海道庁が石狩・苫小牧6用地を計990MWで公募（2026-10-20開始）<span class="tag">【報道ベース】</span>。</td></tr>
+    <tr><td>再エネ・PPA</td><td class="co">レノバ（9519）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">2</td><td class="n">3</td><td class="n">3</td><td class="n sum">10</td><td class="ev">中計2030に「DC等の新増設による需要増→PPA需要拡大」。東京ガスと風力54.6MWで25年PPA（2026-07-02）。DCとの直接契約は不明。<br><a href="https://www.renovainc.com/news/business/pdf/20260702_01_PRESS.pdf">リリース</a></td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他 Tier 3：</b>東京ガス（9531、電源併設型DCの4社協業 2026-10-19）、中部電力、東北電力、九州電力、電源開発、大阪ガス。全国のDC最大需要の個別計上は2026年度64万kW→2035年度661万kW（<a href="https://www.occto.or.jp/assets/news/juyousoutei/260121_juyousoutei_r1.pdf">OCCTO 2026-01-21</a>）。</p>
+</section>
+
+<section>
+  <h2><span class="no">13</span>監視・セキュリティ</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>構成要素</th><th>企業名（コード）</th><th class="n">Tier</th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">合計</th><th>根拠（出典・時点）</th></tr></thead>
+    <tbody>
+    <tr><td>DC事業（セコムトラストシステムズ）</td><td class="co">セコム（9735）</td><td class="n"><span class="tier t2">2</span></td><td class="n">2</td><td class="n">3</td><td class="n">2</td><td class="n">4</td><td class="n sum">11</td><td class="ev">2026/3期短信（2026-05-12）に「DC事業の増収」。子会社セコムトラストシステムズの売上527.44億円は連結1.26兆円の約4%（計算値）。<br><a href="https://www.nikkei.com/markets/ir/irftp/data/tdnr/tdnetg3/20260512/fx006s/140120260508520212.pdf">短信</a></td></tr>
+    <tr><td>DCIM</td><td class="co">日立製作所（6501）</td><td class="n"><span class="tier t3">3</span></td><td class="n">1</td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td class="n sum">10</td><td class="ev">「HMAX Data Center」（電力・IT・冷却の統合運用）を提供開始（2026-09-03）。DC売上は不明。<br><a href="https://www.hitachi.com/content/dam/hitachi/global/ja_jp/press/files/2026/09/0903c.pdf">プレス</a></td></tr>
+    <tr><td>防災・消火</td><td class="co">能美防災（6744）</td><td class="n"><span class="tier t3">3</span></td><td class="n">1</td><td class="n">3</td><td class="n">2</td><td class="n">1</td><td class="n sum">7</td><td class="ev">2026/3期短信：受注1,611億円（+15.4%）。DCへの言及は確認できず。<br><a href="https://www.nohmi.co.jp/ir/p6slda0000001ayk-att/2026_3tanshin.pdf">短信</a></td></tr>
+    <tr><td>防災・消火</td><td class="co">ホーチキ（6745）</td><td class="n"><span class="tier t3">3</span></td><td class="n">1</td><td class="n">3</td><td class="n">2</td><td class="n">1</td><td class="n sum">7</td><td class="ev">2026/3期：売上約1,058億円。DCへの言及は確認できず。</td></tr>
+    <tr><td>警備</td><td class="co">ALSOK（2331）</td><td class="n"><span class="tier t3">3</span></td><td class="n">1</td><td class="n">2</td><td class="n">2</td><td class="n">1</td><td class="n sum">6</td><td class="ev">DC向けの内訳は開示で確認できず。</td></tr>
+    </tbody></table></div>
+  <p class="others"><b>その他 Tier 3：</b>日本ドライケミカル（1909）、NEC（6701）、富士通（6702）。DCIMの開示は確認できず。</p>
+  <p class="others"><b>建物・運営層のCの考え方：</b>ゼネコンの工事量は受電MWにほぼ比例するが、密度が上がるとMWあたりの床面積は減る（C=3）。電気工事は特高受変電が加わるため比例以上の余地があるが、工場で組み立てるモジュール型電源設備への置き換えで減点（C=4）。空調工事は、液冷で付加価値の一部が機器メーカー側に移るため減点（C=4）。電力会社は需要がMWに比例するが、送配電収入は規制で利益は比例しない。防災・警備は床面積・施設数に連動するため比例を下回る（C=2）。</p>
+</section>
+
+<!-- ============ 上位 ============ -->
+<section>
+  <h2><span class="no">14</span>合計点の上位（一覧。推奨ではない）</h2>
+  <p>各社が出てくる構成要素のうち、一番高い合計点で並べています。15位に同点が並んだため、15点以上の17社を載せています。</p>
+  <div class="tbl"><table style="min-width:640px">
+    <thead><tr><th class="n">順位</th><th>企業名（コード）</th><th>最も点が高い構成要素</th><th class="n">Tier</th><th class="n">合計</th><th>点数の根拠になった開示の種類</th></tr></thead>
+    <tbody>
+    <tr><td class="n">1</td><td class="co">フジクラ（5803）</td><td>光ファイバ・ケーブル</td><td class="n"><span class="tier t1">1</span></td><td class="n sum">18</td><td>決算短信のセグメント数値・増収理由</td></tr>
+    <tr><td class="n">1</td><td class="co">さくらインターネット（3778）</td><td>DC運営・GPUクラウド</td><td class="n"><span class="tier t1">1</span></td><td class="n sum">18</td><td>決算短信・説明資料のGPU売上</td></tr>
+    <tr><td class="n">3</td><td class="co">イビデン（4062）</td><td>ICパッケージ基板</td><td class="n"><span class="tier t1">1</span></td><td class="n sum">17</td><td>短信・説明資料・Q&amp;A（シェア70〜80%）</td></tr>
+    <tr><td class="n">4</td><td class="co">古河電気工業（5801）</td><td>光ファイバ／液冷</td><td class="n"><span class="tier t1">1</span></td><td class="n sum">16</td><td>経営方針（DC営業利益目標）・リリース</td></tr>
+    <tr><td class="n">4</td><td class="co">精工技研（6834）</td><td>光コネクタ部品</td><td class="n"><span class="tier t1">1</span></td><td class="n sum">16</td><td>スポンサー付きレポート・修正理由</td></tr>
+    <tr><td class="n">4</td><td class="co">村田製作所（6981）</td><td>MLCC</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">16</td><td>DC関連売上の数値（4,250億円）</td></tr>
+    <tr><td class="n">4</td><td class="co">日立製作所（6501）</td><td>変圧器・受変電</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">16</td><td>受注数値・経営陣の口頭発言</td></tr>
+    <tr><td class="n">4</td><td class="co">富士電機（6504）</td><td>受変電・UPS</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">16</td><td>説明資料Q&amp;AのDC売上見込み（約1,000億円）</td></tr>
+    <tr><td class="n">4</td><td class="co">ダイキン工業（6367）</td><td>空冷</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">16</td><td>DC事業戦略説明会の売上・目標</td></tr>
+    <tr><td class="n">4</td><td class="co">日比谷総合設備（1982）</td><td>設備工事</td><td class="n"><span class="tier t1">1</span></td><td class="n sum">16</td><td>FACTBOOKの用途区分・報道（暫定）</td></tr>
+    <tr><td class="n">11</td><td class="co">住友電気工業（5802）</td><td>光配線</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">15</td><td>セグメント数値（出典の確度は低め）</td></tr>
+    <tr><td class="n">11</td><td class="co">ローム（6963）</td><td>パワー半導体・800VDC</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">15</td><td>説明会資料（C&amp;S 2.5倍計画）</td></tr>
+    <tr><td class="n">11</td><td class="co">三菱重工業（7011）</td><td>ガスタービン</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">15</td><td>決算資料の定性記載</td></tr>
+    <tr><td class="n">11</td><td class="co">ミライト・ワン（1417）</td><td>設備工事</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">15</td><td>記者発表資料のDC受注・目標</td></tr>
+    <tr><td class="n">11</td><td class="co">高砂熱学工業（1969）</td><td>空調工事</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">15</td><td>用途別「データセンター」区分（数値不明）</td></tr>
+    <tr><td class="n">11</td><td class="co">日本電信電話（9432）</td><td>DC運営</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">15</td><td>DC事業売上（報道経由）</td></tr>
+    <tr><td class="n">11</td><td class="co">東京電力HD（9501）</td><td>電力供給</td><td class="n"><span class="tier t2">2</span></td><td class="n sum">15</td><td>官民懇談会資料（託送申込）</td></tr>
+    </tbody></table></div>
+</section>
+
+<!-- ============ リスク ============ -->
+<section>
+  <h2><span class="no">15</span>各社で確認しておくべきリスク（調査で見つかった事実のみ）</h2>
+  <div class="grid2">
+    <div class="card"><h4>フジクラ</h4><ul><li>6月の上方修正理由に「ハイパースケーラーからの想定外の受注と売価引き上げ」（顧客集中の示唆。有報では10%超の顧客なしとの引用）</li><li>光ファイバ・ケーブル増強に最大3,000億円、佐倉新工場は2030年12月稼働予定</li><li>CPOでプラガブル部品の需要が変わる可能性（ファイバ・多心コネクタは残る）</li></ul></div>
+    <div class="card"><h4>さくらインターネット</h4><ul><li>GPU売上が上期の約44%に集中</li><li>顧客の集中度は不明</li></ul></div>
+    <div class="card"><h4>イビデン</h4><ul><li>3年で5,000億円、AI向け能力約2.5倍の投資＝設備投資サイクルのピークアウトで稼働率低下のリスク</li><li>増益要因に円安を含む</li><li>NVIDIA向け増産の報道あり<span class="tag">【報道ベース】</span>。開示で顧客名は未確認</li></ul></div>
+    <div class="card"><h4>古河電気工業</h4><ul><li>売上が銅価の上昇でも膨らむ</li><li>水冷工場の量産時期の記載が資料ごとに異なる。約550億円の投資が先行</li><li>上期決算に対し「AI逆風」への懸念と報道（中身は未確認）</li><li>純利益に政策保有株の売却益を含む</li></ul></div>
+    <div class="card"><h4>精工技研</h4><ul><li>光製品関連が売上の約69%（計画）と少ない製品群に依存</li><li>顧客は不明</li></ul></div>
+    <div class="card"><h4>村田製作所</h4><ul><li>MLCC能力に5年で約1兆円＝ピークアウト時に固定費負担</li><li>下期のDC売上を上期比+57.7%と見込む計画＝未達リスク</li></ul></div>
+    <div class="card"><h4>日立製作所</h4><ul><li>DCはHitachi Energy売上の10%強にとどまる（口頭発言）</li><li>「現有能力では受注残を消化しきれない」との発言<span class="tag">【二次情報】</span></li></ul></div>
+    <div class="card"><h4>富士電機</h4><ul><li>海外勢の参入でDC案件の価格競争が激化（2026-05-27 事業戦略説明会）</li><li>1Qは前年の大型DC案件の反動で国内電源が減収＝受注に波</li><li>従来型UPSは800VDCで置き換わるリスク</li></ul></div>
+    <div class="card"><h4>ダイキン工業</h4><ul><li>DC冷却の目標は北米に集中</li><li>会社自身が冷却の20〜30%は液冷などに置き換わると説明</li><li>4〜9月の上振れには円安が寄与と報道。目標値（3,000億円以上と約33億ドル）が食い違い</li></ul></div>
+    <div class="card"><h4>日比谷総合設備</h4><ul><li>四半期ごとの受注の振れが大きい（1Qは3.4倍）</li><li>DC/情報419億円は未検証</li></ul></div>
+    <div class="card"><h4>住友電気工業</h4><ul><li>増益要因に円安・売値改善</li><li>情報通信には従来型の通信インフラ製品も含まれる</li></ul></div>
+    <div class="card"><h4>ローム</h4><ul><li>FY25はSiCの減損で1,584億円の最終赤字、上期も半導体素子セグメントは赤字</li><li>1Q時点で生産能力を超える受注</li></ul></div>
+    <div class="card"><h4>三菱重工業</h4><ul><li>IGCCの部品交換で675億円の損失</li><li>会社は2026年のGT市場を70〜100GW（前年は約100GW）と見ている</li><li>10MW級チラーはUL認証の取得前</li></ul></div>
+    <div class="card"><h4>ミライト・ワン</h4><ul><li>DC受注の定義が変わり、過去と比較できない</li></ul></div>
+    <div class="card"><h4>高砂熱学工業</h4><ul><li>液冷で付加価値の一部が機器メーカー側に移る</li><li>用途別DCの実数は未確認</li></ul></div>
+    <div class="card"><h4>日本電信電話</h4><ul><li>DC事業は上期に営業減益（-9.5%）</li><li>通期計画にDC譲渡益700億円を織り込み（前年上期は1,295億円）＝資産の流動化に依存</li></ul></div>
+    <div class="card"><h4>東京電力HD</h4><ul><li>接続申込（約1,790万kW）と2030年までの供給開始分（448万kW）に大きな差</li><li>申込取消しルール（2026-10-01）、大規模需要のサイクル審査（2026-04-01〜）</li><li>送配電収入はレベニューキャップ制で利益は需要に比例しない</li></ul></div>
+    <div class="card"><h4>その他で目立つもの</h4><ul><li>ニデック：監査法人の意見不表明、特別注意銘柄</li><li>味の素：中東情勢で事業利益▲250億円規模の可能性を明示、新工場は2032年</li><li>日東紡：供給制約、台湾大手は「不足は2026年上半期に縮小」との見方<span class="tag">【報道ベース】</span></li><li>SWCC・三井金属：銅・金属価格</li><li>液浸冷却液：フッ素系はPFAS規制の対象になりうるとの報道</li><li>大林組：一部DC案件の計画中止・延期</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ 市場データ ============ -->
+<section>
+  <h2><span class="no">16</span>織り込みを見るための材料（事実のみ）</h2>
+  <p>2026-11-10終値時点。Yahoo Finance（yfinanceで取得）の値で、取引所・会社の数値とずれることがあります。特に予想PERの基準と、株式分割の調整に注意してください。東京電力HDのPER・PBRは、取得値が通常の水準と大きく違うため、要確認です。</p>
+  <div class="tbl"><table style="min-width:720px">
+    <thead><tr><th>企業名（コード）</th><th class="n">株価（円）</th><th class="n">実績PER</th><th class="n">予想PER</th><th class="n">PBR</th><th class="n">過去1年の騰落率</th><th class="n">時価総額（億円）</th></tr></thead>
+    <tbody>
+    <tr><td class="co">フジクラ（5803）</td><td class="n">3,262</td><td class="n">34.4</td><td class="n">10.8</td><td class="n">8.89</td><td class="n">-3.8%</td><td class="n">54,092</td></tr>
+    <tr><td class="co">さくらインターネット（3778）</td><td class="n">3,020</td><td class="n">44.1</td><td class="n">40.7</td><td class="n">3.82</td><td class="n">-5.5%</td><td class="n">1,211</td></tr>
+    <tr><td class="co">イビデン（4062）</td><td class="n">6,452</td><td class="n">47.8</td><td class="n">21.0</td><td class="n">6.07</td><td class="n">+98.5%</td><td class="n">36,956</td></tr>
+    <tr><td class="co">古河電気工業（5801）</td><td class="n">2,158.5</td><td class="n">17.0</td><td class="n">7.3</td><td class="n">3.49</td><td class="n">+130.5%</td><td class="n">15,238</td></tr>
+    <tr><td class="co">精工技研（6834）</td><td class="n">5,000</td><td class="n">30.0</td><td class="n">30.5</td><td class="n">6.29</td><td class="n">+149.0%</td><td class="n">2,239</td></tr>
+    <tr><td class="co">村田製作所（6981）</td><td class="n">5,241</td><td class="n">32.8</td><td class="n">22.1</td><td class="n">3.44</td><td class="n">+64.6%</td><td class="n">94,894</td></tr>
+    <tr><td class="co">日立製作所（6501）</td><td class="n">4,913</td><td class="n">28.6</td><td class="n">27.6</td><td class="n">3.36</td><td class="n">-2.8%</td><td class="n">219,066</td></tr>
+    <tr><td class="co">富士電機（6504）</td><td class="n">11,545</td><td class="n">14.7</td><td class="n">19.0</td><td class="n">2.08</td><td class="n">+11.2%</td><td class="n">16,862</td></tr>
+    <tr><td class="co">ダイキン工業（6367）</td><td class="n">23,045</td><td class="n">22.4</td><td class="n">23.3</td><td class="n">2.16</td><td class="n">+19.0%</td><td class="n">64,168</td></tr>
+    <tr><td class="co">日比谷総合設備（1982）</td><td class="n">2,985</td><td class="n">14.2</td><td class="n">—</td><td class="n">1.71</td><td class="n">+38.2%</td><td class="n">1,232</td></tr>
+    <tr><td class="co">住友電気工業（5802）</td><td class="n">1,500.5</td><td class="n">14.3</td><td class="n">6.8</td><td class="n">1.63</td><td class="n">+1.5%</td><td class="n">46,867</td></tr>
+    <tr><td class="co">ローム（6963）</td><td class="n">3,017</td><td class="n">—（赤字）</td><td class="n">34.7</td><td class="n">1.53</td><td class="n">+52.1%</td><td class="n">11,651</td></tr>
+    <tr><td class="co">三菱重工業（7011）</td><td class="n">3,154</td><td class="n">32.8</td><td class="n">34.1</td><td class="n">3.30</td><td class="n">-27.2%</td><td class="n">106,082</td></tr>
+    <tr><td class="co">ミライト・ワン（1417）</td><td class="n">3,285</td><td class="n">11.1</td><td class="n">15.1</td><td class="n">1.05</td><td class="n">+9.9%</td><td class="n">2,861</td></tr>
+    <tr><td class="co">高砂熱学工業（1969）</td><td class="n">3,730</td><td class="n">14.1</td><td class="n">11.1</td><td class="n">2.36</td><td class="n">-16.8%</td><td class="n">4,882</td></tr>
+    <tr><td class="co">日本電信電話（9432）</td><td class="n">165.4</td><td class="n">14.0</td><td class="n">11.4</td><td class="n">1.35</td><td class="n">+12.8%</td><td class="n">133,585</td></tr>
+    <tr><td class="co">東京電力HD（9501）</td><td class="n">444.6</td><td class="n">2.5（要確認）</td><td class="n">2.1（要確認）</td><td class="n">0.21（要確認）</td><td class="n">-48.0%</td><td class="n">7,129</td></tr>
+    </tbody></table></div>
+</section>
+
+<!-- ============ ギャップ ============ -->
+<section>
+  <h2><span class="no">17</span>調べきれなかった点・情報の空白</h2>
+  <ul class="plain">
+    <li><b>一次資料の原本照合：</b>有価証券報告書・決算短信・説明資料のPDFを1件も開けていません（会社IRサイト・TDnet・JPX・EDINETに接続できず）。表の数値はすべて、検索の抜粋・報道・集計サイト経由です。重要な数値は原本で確認が必要です。</li>
+    <li><b>DC売上を金額で開示していると確認できたのは一部だけ：</b>村田製作所（DC関連 4,250億円）、富士電機（約1,000億円、Q&amp;A）、さくらインターネット（GPU売上）、ダイキン（北米DC冷却 約1,000億円）、新晃工業（DC向け約40億円）、ミライト・ワン（DC受注）、三菱電機（DC関連 400→800億円）、レゾナック（後工程のAI比率20%）、NTT・KDDI（DC事業売上、報道経由）。その他は「不明」またはセグメントからの推定です。</li>
+    <li><b>11/10以降の決算が未反映：</b>フジクラ（11/10）、SWCC・サンケン（11/11）、朝日工業社・デンヨー・湖北工業（11/12）、精工技研・荏原・大林組・大気社（11/13）、レゾナックQ3（11月中旬）。</li>
+    <li><b>中間期を確認できていない会社：</b>三井金属、日本ケミコン、味の素のセグメント値、きんでん、関電工、クラフティア、トーエネック、エクシオ、鹿島、大成、三機、ダイダン、日比谷、ニデック、新晃工業、山洋電気、川崎重工。</li>
+    <li><b>未検証の会社：</b>プリント基板（日本CMK）、電源モジュール（コーセル、FDK、タムラ、ニチコン、指月電機）、ストレージ（東洋鋼鈑、富士フイルム、ニッパツ）、材料（太陽HD、住友ベークライト、三菱ガス化学）、ネットワーク（浜松ホトニクス、富士通、ヒロセ電機）、800VDC関連（TDK、村田、富士電機）。</li>
+    <li><b>市場シェア：</b>一次資料で確認できたのは、イビデン（AIサーバー向け70〜80%、会社Q&amp;A）、白山（MTフェルール世界2位）、荏原（北米DC向け6%台）、新晃工業（国内DC空調機 約10%、スポンサー付きレポート）程度です。</li>
+    <li><b>顧客名：</b>一次資料で確認できた顧客名はありません（東急不動産の石狩DCに入居するGMO・BBTのみリリースで確認）。</li>
+    <li><b>数値の食い違い：</b>ダイキンのDC目標（3,000億円以上と約33億ドル）、三菱電機のDC関連事業（800億円と0.4兆円）、山洋電気の営業利益、古河電工の水冷量産時期、ミライトのDC受注の対象年度。</li>
+    <li><b>市場データ：</b>Yahoo Financeの値で、予想PERの基準や分割の調整がずれている可能性があります。東京電力HDの値は要確認です。</li>
+  </ul>
+  <p class="others">この表は情報の整理を目的としたもので、どの銘柄の売買も推奨しません。点数は、上の限界のもとでの暫定的な評価です。</p>
+</section>
+</div>
