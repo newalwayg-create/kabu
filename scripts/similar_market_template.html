@@ -1,0 +1,354 @@
+<title>日経平均の相似形</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 1カラムの分析レポート。上に結論、中央に大きな重ね合わせチャート、下に候補表と「その後」の分布 */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#111418; --ink-2:#4b525c; --ink-3:#7c8590;
+  --rule:#dfe3e8; --grid:#eceff3; --nikkei:#2a78d6; --match:#eb6834; --band:#2a78d6;
+  --up:#008300; --down:#e34948; --sel:#e8f0fb;
+  --f-disp:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121417; --panel:#1a1d21; --ink:#eef0f2; --ink-2:#b9c0c8; --ink-3:#8a929c;
+  --rule:#2c3138; --grid:#24282e; --nikkei:#3987e5; --match:#d95926; --band:#3987e5;
+  --up:#0ca30c; --down:#e66767; --sel:#1f2d40; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121417; --panel:#1a1d21; --ink:#eef0f2; --ink-2:#b9c0c8; --ink-3:#8a929c;
+  --rule:#2c3138; --grid:#24282e; --nikkei:#3987e5; --match:#d95926; --band:#3987e5;
+  --up:#0ca30c; --down:#e66767; --sel:#1f2d40; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2,h3{font-family:var(--f-disp);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:900;letter-spacing:.01em}
+h2{font-size:1.25rem;font-weight:700}
+.eyebrow{font-size:.75rem;letter-spacing:.12em;color:var(--ink-3);font-weight:500}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+header{display:grid;gap:10px}
+.lede{color:var(--ink-2);max-width:68ch;margin:0}
+.kpis{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:6px}
+.kpi{display:grid;gap:0}
+.kpi b{font-family:var(--f-num);font-size:1.35rem;font-weight:600}
+.kpi span{font-size:.75rem;color:var(--ink-3)}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:18px clamp(12px,2.5vw,22px);display:grid;gap:14px;min-width:0}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 22px;margin:0;padding:0;list-style:none}
+.findings li{display:grid;gap:2px;min-width:0}
+.findings strong{font-family:var(--f-disp);font-size:1rem}
+.findings p{margin:0;color:var(--ink-2);font-size:.9rem}
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;background:transparent;color:var(--ink-2);border:0;padding:6px 12px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.seg button:focus-visible,.row:focus-visible,.thumb:focus-visible{outline:2px solid var(--nikkei);outline-offset:2px}
+.ctl-label{font-size:.75rem;color:var(--ink-3);letter-spacing:.06em}
+.charthead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;align-items:baseline}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.85rem;color:var(--ink-2)}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+.chart{position:relative;width:100%;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.axis text{fill:var(--ink-3);font-family:var(--f-num);font-size:11px}
+.grid line{stroke:var(--grid);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;font-size:.8rem;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.12);min-width:180px;z-index:2}
+.tip .k{color:var(--ink-3)}
+.tip .sw{display:inline-block;width:10px;height:2px;vertical-align:middle;margin-right:6px}
+.matchtitle{font-family:var(--f-disp);font-weight:700;font-size:1.05rem}
+.matchmeta{color:var(--ink-2);font-size:.85rem}
+.tablewrap{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th{font-weight:500;color:var(--ink-3);text-align:left;font-size:.75rem;letter-spacing:.04em;padding:6px 8px;border-bottom:1px solid var(--rule);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--grid);white-space:nowrap}
+td.r,th.r{text-align:right}
+.row{cursor:pointer}
+.row:hover{background:var(--grid)}
+.row[aria-selected="true"]{background:var(--sel)}
+.kindtag{font-size:.72rem;color:var(--ink-3)}
+.bar{display:inline-block;height:6px;border-radius:0 3px 3px 0;background:var(--match);vertical-align:middle;margin-right:8px}
+.pos{color:var(--up)} .neg{color:var(--down)}
+.thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.thumbs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.thumb{border:1px solid var(--rule);border-radius:8px;padding:8px 10px;background:transparent;font:inherit;color:inherit;text-align:left;cursor:pointer;display:grid;gap:2px;min-width:0}
+.thumb[aria-selected="true"]{border-color:var(--match)}
+.thumb svg{width:100%;height:auto;display:block}
+.thumb .t1{font-size:.8rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thumb .t2{font-size:.72rem;color:var(--ink-3)}
+.fwdgrid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:720px){.fwdgrid{grid-template-columns:1fr}}
+.stats{display:grid;gap:12px}
+.stat b{font-family:var(--f-num);font-size:1.5rem;font-weight:600;display:block}
+.stat span{font-size:.78rem;color:var(--ink-3)}
+.note{font-size:.82rem;color:var(--ink-2);margin:0}
+.method{display:grid;gap:8px;font-size:.88rem;color:var(--ink-2)}
+.method p{margin:0;max-width:75ch}
+.method code{font-family:var(--f-num);font-size:.82rem;color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.line{transition:opacity .2s}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">類似チャート検索 · 日経平均 <span id="asof" class="num"></span> 終値基準</div>
+  <h1>今の日経平均に似た相場はどこか</h1>
+  <p class="lede">直近の日経平均の値動き（対数価格の形）をパターンにして、1965年以降の日経平均、世界14指数、日米の主要株110銘柄の全期間とスライド比較しました。「一致率」は形の相関と短期の値動きの相関を合成した数値です。</p>
+  <div class="kpis" id="kpis"></div>
+</header>
+
+<section class="panel" aria-labelledby="f-h">
+  <h2 id="f-h">わかったこと</h2>
+  <ul class="findings">
+    <li><strong>同じ形をした過去の局面は2024年夏</strong><p>1年の形で過去の局面を探すと、日経平均自身の 2023年8月〜2024年8月（令和のブラックマンデーで終わる1年）と、同時期のディスコ・東京エレクトロンが上位に並びます。急騰の後に高値もみ合いを経て急落、という順番が同じです。</p></li>
+    <li><strong>いま同じ形で動いているのは半導体・電子部品</strong><p>同時期で比べると、イビデン、東京エレクトロン、村田製作所の一致率が90%を超えます。台湾加権・KOSPI・SOX指数も80%台で、今の日経平均は「AI半導体相場」そのものの形です。値幅は日経平均の2〜4倍あります。</p></li>
+    <li><strong>その後の動きはばらばら</strong><p>類似上位20局面の「その後60営業日」は、1年の形で上昇55%・中央値+0.4%、半年の形で上昇65%・中央値+2.4%。形が似ていても次の方向は決まりません。下落が続いた例（東京エレクトロン2024年8月以降 −20%、SOX 1995年末 −23%）も反発した例もあります。</p></li>
+  </ul>
+</section>
+
+<section class="panel" aria-labelledby="c-h">
+  <div class="controls">
+    <span class="ctl-label">比較する長さ</span>
+    <div class="seg" role="group" aria-label="比較する長さ">
+      <button id="w250" type="button" aria-pressed="true" data-w="250">直近1年（250日）</button>
+      <button id="w120" type="button" aria-pressed="false" data-w="120">直近半年（120日）</button>
+    </div>
+    <span class="ctl-label">重ね方</span>
+    <div class="seg" role="group" aria-label="重ね方">
+      <button id="mfit" type="button" aria-pressed="true" data-m="fit">形を合わせる</button>
+      <button id="mraw" type="button" aria-pressed="false" data-m="raw">実際の値幅</button>
+    </div>
+  </div>
+  <div class="charthead">
+    <div>
+      <h2 id="c-h" class="matchtitle"></h2>
+      <div class="matchmeta" id="matchmeta"></div>
+    </div>
+    <div class="legend">
+      <span><i style="border-color:var(--nikkei)"></i>日経平均</span>
+      <span><i style="border-color:var(--match)"></i>類似局面</span>
+      <span><i style="border-color:var(--match);border-top-style:dashed"></i>類似局面のその後</span>
+    </div>
+  </div>
+  <div class="chart" id="main"></div>
+  <p class="note" id="modenote"></p>
+</section>
+
+<section class="panel" aria-labelledby="t-h">
+  <div class="charthead">
+    <h2 id="t-h">候補の一覧</h2>
+    <div class="seg" role="group" aria-label="一覧の種類">
+      <button id="lhist" type="button" aria-pressed="true" data-l="hist">過去の類似局面</button>
+      <button id="lnow" type="button" aria-pressed="false" data-l="now">同時期に連動</button>
+    </div>
+  </div>
+  <p class="note" id="listnote"></p>
+  <div class="tablewrap"><table id="tbl"></table></div>
+</section>
+
+<section class="panel" aria-labelledby="s-h">
+  <h2 id="s-h">上位6局面の重ね合わせ</h2>
+  <div class="thumbs" id="thumbs"></div>
+</section>
+
+<section class="panel" aria-labelledby="fw-h">
+  <h2 id="fw-h">類似局面の「その後60営業日」を今の日経平均に当てはめると</h2>
+  <div class="fwdgrid">
+    <div class="chart" id="fan"></div>
+    <div class="stats" id="stats"></div>
+  </div>
+  <p class="note">類似上位20局面（その後のデータがあるもの）の騰落率を今の終値に掛けた分布です。帯は25〜75%、線は中央値。予測ではなく、過去に同じ形だった相場がその後どう散らばったかを示しています。</p>
+</section>
+
+<section class="panel method" aria-labelledby="m-h">
+  <h2 id="m-h">計算方法</h2>
+  <p><b>形状相関</b>：基準期間の日経平均の対数価格と、候補の同じ長さの対数価格のピアソン相関。値幅の大小は無視して形だけを比べます。</p>
+  <p><b>5日リターン相関</b>：5営業日ごとの騰落率の並びの相関。右肩上がりなどトレンドが同じだけの見かけの一致を割り引きます。</p>
+  <p><b>一致率</b>：<code>0.7 × 形状相関 + 0.3 × 5日リターン相関</code>。<b>値幅倍率</b>は候補の値幅（対数レンジ）÷日経平均の値幅で、1に近いほど動きの大きさも近いことを示します。</p>
+  <p>過去の類似局面は基準期間と1日でも重なる期間を除外し、同じ銘柄の近い期間は1局面にまとめて、1銘柄につき最大2局面までにしています。データは Yahoo Finance の配当調整後終値。相関は因果を意味せず、似た形でもその後の値動きは保証されません。</p>
+</section>
+</div>
+
+<script>
+const DATA = __DATA__;
+const $ = s => document.querySelector(s);
+const st = { w: "250", mode: "fit", list: "hist", sel: 0 };
+const fmtY = v => Math.round(v).toLocaleString("ja-JP");
+const pct = (v, d = 1) => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(d) + "%";
+const mean = a => a.reduce((s, x) => s + x, 0) / a.length;
+const sd = a => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const ymd = s => s.replaceAll("-", "/");
+
+function W() { return DATA.windows[st.w]; }
+function items() { return st.list === "hist" ? W().hist : W().now; }
+function current() { return items()[st.sel] || items()[0]; }
+
+// 類似局面の対数価格を日経平均の対数スケールへ写す
+function mapMatch(m) {
+  const q = W().close.map(Math.log), qEnd = q[q.length - 1];
+  const p = m.path, f = m.fwd || [];
+  if (st.mode === "raw") return { body: p.map(x => qEnd + x), fwd: f.map(x => qEnd + x) };
+  const mq = mean(q), sq = sd(q), mm = mean(p), sm = sd(p);
+  const tr = x => mq + (x - mm) / sm * sq;
+  return { body: p.map(tr), fwd: f.map(tr) };
+}
+
+function niceTicks(lo, hi, n = 5) {
+  const span = hi - lo, raw = span / n, mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => span / s <= n + 1);
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) out.push(v); return out;
+}
+
+function drawMain() {
+  const box = $("#main"); box.innerHTML = "";
+  const w = W(), m = current(), n = w.close.length, F = 60;
+  const width = Math.max(320, box.clientWidth), height = Math.round(Math.min(440, Math.max(280, width * 0.48)));
+  const pad = { l: 58, r: 14, t: 14, b: 30 };
+  const q = w.close.map(Math.log), mm = mapMatch(m);
+  const all = q.concat(mm.body, mm.fwd);
+  let lo = Math.min(...all), hi = Math.max(...all); const g = (hi - lo) * 0.06; lo -= g; hi += g;
+  const X = i => pad.l + (i / (n - 1 + F)) * (width - pad.l - pad.r);
+  const Y = v => pad.t + (1 - (v - lo) / (hi - lo)) * (height - pad.t - pad.b);
+  const svg = el("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": `日経平均と${m.name}の重ね合わせ` }, box);
+  const gg = el("g", { class: "grid" }, svg), ax = el("g", { class: "axis" }, svg);
+  niceTicks(Math.exp(lo), Math.exp(hi)).forEach(v => {
+    const y = Y(Math.log(v)); el("line", { x1: pad.l, x2: width - pad.r, y1: y, y2: y }, gg);
+    const t = el("text", { x: pad.l - 8, y: y + 4, "text-anchor": "end" }, ax); t.textContent = fmtY(v);
+  });
+  // x 軸: 日経平均の日付（月初）と「その後」
+  const seen = new Set(); const every = n > 200 ? 2 : 1;
+  w.dates.forEach((d, i) => { const ym = d.slice(0, 7); if (seen.has(ym) || d.slice(8) > "07") return; seen.add(ym);
+    if ((+d.slice(5, 7)) % every) return;
+    const t = el("text", { x: X(i), y: height - 8, "text-anchor": "middle" }, ax); t.textContent = d.slice(2, 7).replace("-", "/"); });
+  const x0 = X(n - 1);
+  el("rect", { x: x0, y: pad.t, width: width - pad.r - x0, height: height - pad.t - pad.b, fill: css("--grid"), opacity: .5 }, svg);
+  el("line", { x1: x0, x2: x0, y1: pad.t, y2: height - pad.b, stroke: css("--ink-3"), "stroke-dasharray": "3 3" }, svg);
+  const lt = el("text", { x: x0 + 6, y: pad.t + 14, fill: css("--ink-2"), "font-size": 11 }, svg); lt.textContent = "その後60日";
+  const path = (arr, off) => arr.map((v, i) => `${i ? "L" : "M"}${X(i + off).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+  el("path", { d: path(mm.body, 0), fill: "none", stroke: css("--match"), "stroke-width": 2, class: "line", "stroke-linejoin": "round" }, svg);
+  if (mm.fwd.length) el("path", { d: path(mm.fwd, n - 1), fill: "none", stroke: css("--match"), "stroke-width": 2, "stroke-dasharray": "5 4" }, svg);
+  el("path", { d: path(q, 0), fill: "none", stroke: css("--nikkei"), "stroke-width": 2.25, "stroke-linejoin": "round" }, svg);
+  el("circle", { cx: x0, cy: Y(q[n - 1]), r: 4.5, fill: css("--nikkei"), stroke: css("--panel"), "stroke-width": 2 }, svg);
+  const et = el("text", { x: x0 - 8, y: Y(q[n - 1]) + 18, "text-anchor": "end", fill: css("--ink"), "font-size": 12, "font-family": css("--f-num") }, svg);
+  et.textContent = fmtY(w.close[n - 1]);
+
+  // ホバー
+  const cross = el("line", { y1: pad.t, y2: height - pad.b, stroke: css("--ink-3"), opacity: 0 }, svg);
+  const dq = el("circle", { r: 4, fill: css("--nikkei"), stroke: css("--panel"), "stroke-width": 2, opacity: 0 }, svg);
+  const dm = el("circle", { r: 4, fill: css("--match"), stroke: css("--panel"), "stroke-width": 2, opacity: 0 }, svg);
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+  const hit = el("rect", { x: pad.l, y: pad.t, width: width - pad.l - pad.r, height: height - pad.t - pad.b, fill: "transparent" }, svg);
+  const move = ev => {
+    const r = svg.getBoundingClientRect(), sx = (ev.clientX - r.left) * width / r.width;
+    const i = Math.max(0, Math.min(n - 1 + F, Math.round((sx - pad.l) / (width - pad.l - pad.r) * (n - 1 + F))));
+    const x = X(i); cross.setAttribute("x1", x); cross.setAttribute("x2", x); cross.setAttribute("opacity", .6);
+    const inQ = i < n, mv = i < n ? mm.body[i] : mm.fwd[i - n + 1], raw = i < n ? m.path[i] : (m.fwd ? m.fwd[i - n + 1] : null);
+    dq.setAttribute("opacity", inQ ? 1 : 0); if (inQ) { dq.setAttribute("cx", x); dq.setAttribute("cy", Y(q[i])); }
+    dm.setAttribute("opacity", mv != null ? 1 : 0); if (mv != null) { dm.setAttribute("cx", x); dm.setAttribute("cy", Y(mv)); }
+    const off = i - (n - 1);
+    let h = `<div class="k">${inQ ? ymd(w.dates[i]) : `基準日の${off}営業日後`}</div>`;
+    if (inQ) h += `<div><span class="sw" style="background:var(--nikkei)"></span>日経平均 <b class="num">${fmtY(w.close[i])}</b> <span class="k num">${pct(Math.exp(q[i] - q[n - 1]) - 1)}</span></div>`;
+    if (raw != null) h += `<div><span class="sw" style="background:var(--match)"></span>${m.name} <span class="num">${pct(Math.exp(raw) - 1)}</span></div>`;
+    h += `<div class="k">騰落率は基準日（窓の最終日）比</div>`;
+    tip.innerHTML = h; tip.hidden = false;
+    const bw = box.clientWidth, px = x * bw / width;
+    tip.style.left = (px > bw * 0.6 ? px - tip.offsetWidth - 12 : px + 12) + "px"; tip.style.top = "8px";
+  };
+  hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("opacity", 0); dq.setAttribute("opacity", 0); dm.setAttribute("opacity", 0); });
+
+  $("#c-h").textContent = `${m.name}${m.start ? `（${ymd(m.start)}〜${ymd(m.end)}）` : "（同時期）"}`;
+  $("#matchmeta").innerHTML = `一致率 <b class="num">${(m.score * 100).toFixed(1)}%</b> · 形状相関 <span class="num">${m.shape_r.toFixed(3)}</span> · 5日リターン相関 <span class="num">${m.ret5_r.toFixed(3)}</span> · 値幅倍率 <span class="num">${m.amp.toFixed(2)}</span>` + (m.fwd60 !== undefined ? ` · その後60日 <b class="num ${m.fwd60 >= 0 ? "pos" : "neg"}">${pct(m.fwd60)}</b>` : "");
+  $("#modenote").textContent = st.mode === "fit"
+    ? "形を合わせる：類似局面の値動きを、日経平均と同じ平均・同じ振れ幅に伸縮して重ねています（形の比較用）。"
+    : `実際の値幅：類似局面の騰落率をそのまま今の日経平均に当てはめています。値幅倍率 ${m.amp.toFixed(2)} 倍の差がそのまま見えます。`;
+}
+
+function drawTable() {
+  const it = items(), hist = st.list === "hist";
+  $("#listnote").textContent = hist
+    ? "基準期間と重ならない過去の期間から探した結果。行を選ぶと上のチャートに重ねます。"
+    : "基準期間と同じ期間どうしの比較。今まさに日経平均と同じ形で動いている銘柄です。";
+  const head = `<thead><tr><th>#</th><th>銘柄</th>${hist ? "<th>期間</th>" : ""}<th>一致率</th><th class="r">形状相関</th><th class="r">5日リターン相関</th><th class="r">値幅倍率</th>${hist ? '<th class="r">その後60日</th>' : ""}</tr></thead>`;
+  const rows = it.map((m, i) => `<tr class="row" tabindex="0" data-i="${i}" aria-selected="${i === st.sel}">
+    <td class="num">${i + 1}</td><td>${m.name}<br><span class="kindtag">${m.kind}</span></td>
+    ${hist ? `<td class="num">${ymd(m.start)}<br>〜${ymd(m.end)}</td>` : ""}
+    <td class="num"><span class="bar" style="width:${Math.max(4, (m.score - 0.6) / 0.35 * 70)}px"></span>${(m.score * 100).toFixed(1)}%</td>
+    <td class="r num">${m.shape_r.toFixed(3)}</td><td class="r num">${m.ret5_r.toFixed(3)}</td><td class="r num">${m.amp.toFixed(2)}</td>
+    ${hist ? `<td class="r num ${m.fwd60 == null ? "" : m.fwd60 >= 0 ? "pos" : "neg"}">${pct(m.fwd60)}</td>` : ""}</tr>`).join("");
+  $("#tbl").innerHTML = head + "<tbody>" + rows + "</tbody>";
+  $("#tbl").querySelectorAll(".row").forEach(r => {
+    const go = () => { st.sel = +r.dataset.i; render(false); $("#main").scrollIntoView({ behavior: "smooth", block: "center" }); };
+    r.addEventListener("click", go); r.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+}
+
+function drawThumbs() {
+  const box = $("#thumbs"); box.innerHTML = "";
+  const w = W(), q = w.close.map(Math.log), mq = mean(q), sq = sd(q);
+  W().hist.slice(0, 6).forEach((m, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "thumb";
+    b.setAttribute("aria-selected", st.list === "hist" && st.sel === i);
+    const vw = 200, vh = 90, mm = mean(m.path), sm = sd(m.path);
+    const mp = m.path.map(x => mq + (x - mm) / sm * sq), all = q.concat(mp);
+    const lo = Math.min(...all), hi = Math.max(...all), n = q.length;
+    const X = j => 2 + j / (n - 1) * (vw - 4), Y = v => 4 + (1 - (v - lo) / (hi - lo)) * (vh - 8);
+    const svg = el("svg", { viewBox: `0 0 ${vw} ${vh}`, "aria-hidden": "true" });
+    const d = a => a.map((v, j) => `${j ? "L" : "M"}${X(j).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+    el("path", { d: d(mp), fill: "none", stroke: css("--match"), "stroke-width": 1.75 }, svg);
+    el("path", { d: d(q), fill: "none", stroke: css("--nikkei"), "stroke-width": 1.75 }, svg);
+    b.appendChild(svg);
+    b.insertAdjacentHTML("beforeend", `<div class="t1">${i + 1}. ${m.name}</div><div class="t2 num">${m.start.slice(0, 7).replace("-", "/")}〜${m.end.slice(0, 7).replace("-", "/")} · ${(m.score * 100).toFixed(1)}%</div>`);
+    b.addEventListener("click", () => { st.list = "hist"; st.sel = i; render(true); $("#main").scrollIntoView({ behavior: "smooth", block: "center" }); });
+    box.appendChild(b);
+  });
+}
+
+function drawFan() {
+  const box = $("#fan"); box.innerHTML = "";
+  const s = W().summary, last = DATA.last, F = s.band_med.length;
+  const width = Math.max(300, box.clientWidth), height = 260, pad = { l: 58, r: 96, t: 12, b: 28 };
+  const vals = s.band_lo.concat(s.band_hi).map(v => last * (1 + v));
+  let lo = Math.min(...vals, last), hi = Math.max(...vals, last); const g = (hi - lo) * .08; lo -= g; hi += g;
+  const X = i => pad.l + i / (F - 1) * (width - pad.l - pad.r), Y = v => pad.t + (1 - (v - lo) / (hi - lo)) * (height - pad.t - pad.b);
+  const svg = el("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": "類似局面のその後60営業日の分布" }, box);
+  const gg = el("g", { class: "grid" }, svg), ax = el("g", { class: "axis" }, svg);
+  niceTicks(lo, hi, 4).forEach(v => { const y = Y(v); el("line", { x1: pad.l, x2: width - pad.r, y1: y, y2: y }, gg);
+    const t = el("text", { x: pad.l - 8, y: y + 4, "text-anchor": "end" }, ax); t.textContent = fmtY(v); });
+  [0, 20, 40, 60].forEach(d => { const t = el("text", { x: X(d), y: height - 8, "text-anchor": "middle" }, ax); t.textContent = d ? `${d}日後` : "今"; });
+  const up = s.band_hi.map((v, i) => `${i ? "L" : "M"}${X(i)},${Y(last * (1 + v))}`).join("");
+  const dn = s.band_lo.map((v, i) => [X(i), Y(last * (1 + v))]).reverse().map(([x, y]) => `L${x},${y}`).join("");
+  el("path", { d: up + dn + "Z", fill: css("--band"), opacity: .18 }, svg);
+  el("line", { x1: pad.l, x2: X(F - 1), y1: Y(last), y2: Y(last), stroke: css("--ink-3"), "stroke-dasharray": "3 3" }, svg);
+  el("path", { d: s.band_med.map((v, i) => `${i ? "L" : "M"}${X(i)},${Y(last * (1 + v))}`).join(""), fill: "none", stroke: css("--band"), "stroke-width": 2 }, svg);
+  const lab = (v, txt) => { const t = el("text", { x: width - pad.r + 6, y: Y(last * (1 + v)) + 4, "text-anchor": "start", fill: css("--ink-2"), "font-size": 11, "font-family": css("--f-num") }, svg); t.textContent = txt; };
+  lab(s.band_hi[F - 1], `75% ${fmtY(last * (1 + s.band_hi[F - 1]))}`);
+  lab(s.band_med[F - 1], `中央値 ${fmtY(last * (1 + s.band_med[F - 1]))}`);
+  lab(s.band_lo[F - 1], `25% ${fmtY(last * (1 + s.band_lo[F - 1]))}`);
+  $("#stats").innerHTML = `
+    <div class="stat"><b>${Math.round(s.up_ratio * 100)}%</b><span>60日後に上昇していた割合（${s.n}局面）</span></div>
+    <div class="stat"><b class="${s.median >= 0 ? "pos" : "neg"}">${pct(s.median)}</b><span>騰落率の中央値（平均 ${pct(s.mean)}）</span></div>
+    <div class="stat"><b>${pct(s.p25)} 〜 ${pct(s.p75)}</b><span>25〜75%の範囲</span></div>`;
+}
+
+function drawKpis() {
+  const w = W(), c = w.close, n = c.length, peak = Math.max(...DATA.windows["250"].close);
+  $("#asof").textContent = ymd(DATA.asof);
+  $("#kpis").innerHTML = `
+    <div class="kpi"><b>${fmtY(DATA.last)}</b><span>日経平均 終値</span></div>
+    <div class="kpi"><b class="${DATA.last / peak - 1 >= 0 ? "pos" : "neg"}">${pct(DATA.last / peak - 1)}</b><span>直近1年の高値 ${fmtY(peak)} から</span></div>
+    <div class="kpi"><b class="pos">${pct(DATA.last / DATA.windows["250"].close[0] - 1)}</b><span>1年前比</span></div>`;
+}
+
+function setPressed(attr, val) { document.querySelectorAll(`[data-${attr}]`).forEach(b => b.setAttribute("aria-pressed", b.dataset[attr] === val)); }
+function render(all = true) { setPressed("w", st.w); setPressed("m", st.mode); setPressed("l", st.list); drawMain(); drawTable(); drawThumbs(); if (all) drawFan(); }
+
+document.querySelectorAll("[data-w]").forEach(b => b.addEventListener("click", () => { st.w = b.dataset.w; st.sel = 0; render(); }));
+document.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { st.mode = b.dataset.m; render(false); }));
+document.querySelectorAll("[data-l]").forEach(b => b.addEventListener("click", () => { st.list = b.dataset.l; st.sel = 0; render(false); }));
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => render(), 150); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => render());
+new MutationObserver(() => render()).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+drawKpis(); render();
+</script>
