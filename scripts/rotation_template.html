@@ -1,0 +1,277 @@
+<title>バブル後の資金の行き先</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 1カラムの分析レポート。結論 → 業種を選んで3つの天井を重ねるチャート → 業種×局面のヒート表 → ローテーションの一致率 */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#111418; --ink-2:#4b525c; --ink-3:#7c8590;
+  --rule:#dfe3e8; --grid:#eceff3; --now:#2a78d6; --e2000:#eb6834; --e2007:#1baf7a;
+  --pos:#2a78d6; --neg:#e34948; --up:#008300; --down:#e34948; --sel:#e8f0fb;
+  --f-disp:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121417; --panel:#1a1d21; --ink:#eef0f2; --ink-2:#b9c0c8; --ink-3:#8a929c;
+  --rule:#2c3138; --grid:#24282e; --now:#3987e5; --e2000:#d95926; --e2007:#199e70;
+  --pos:#3987e5; --neg:#e66767; --up:#0ca30c; --down:#e66767; --sel:#1f2d40; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121417; --panel:#1a1d21; --ink:#eef0f2; --ink-2:#b9c0c8; --ink-3:#8a929c;
+  --rule:#2c3138; --grid:#24282e; --now:#3987e5; --e2000:#d95926; --e2007:#199e70;
+  --pos:#3987e5; --neg:#e66767; --up:#0ca30c; --down:#e66767; --sel:#1f2d40; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2{font-family:var(--f-disp);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:900}
+h2{font-size:1.25rem;font-weight:700}
+.eyebrow{font-size:.75rem;letter-spacing:.12em;color:var(--ink-3);font-weight:500}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+header{display:grid;gap:10px}
+.lede{color:var(--ink-2);max-width:70ch;margin:0}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:18px clamp(12px,2.5vw,22px);display:grid;gap:14px;min-width:0}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px 24px;margin:0;padding:0;list-style:none}
+.findings li{display:grid;gap:2px;min-width:0}
+.findings strong{font-family:var(--f-disp);font-size:1rem}
+.findings p{margin:0;color:var(--ink-2);font-size:.9rem}
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;background:transparent;color:var(--ink-2);border:0;padding:6px 12px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:.8rem;border:1px solid var(--rule);background:transparent;color:var(--ink-2);border-radius:999px;padding:3px 10px;cursor:pointer}
+.chips button[aria-pressed="true"]{border-color:var(--ink);color:var(--ink);background:var(--grid);font-weight:700}
+button:focus-visible,.row:focus-visible{outline:2px solid var(--now);outline-offset:2px}
+.ctl-label{font-size:.75rem;color:var(--ink-3);letter-spacing:.06em}
+.charthead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;align-items:baseline}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.85rem;color:var(--ink-2)}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+.chart{position:relative;width:100%;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.axis text{fill:var(--ink-3);font-family:var(--f-num);font-size:11px}
+.grid line{stroke:var(--grid);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;font-size:.8rem;line-height:1.55;box-shadow:0 4px 14px rgba(0,0,0,.12);min-width:170px;z-index:2}
+.tip .k{color:var(--ink-3)}
+.tip .sw{display:inline-block;width:10px;height:2px;vertical-align:middle;margin-right:6px}
+.note{font-size:.82rem;color:var(--ink-2);margin:0}
+.tablewrap{overflow-x:auto;min-width:0}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:.84rem}
+th{font-weight:500;color:var(--ink-3);font-size:.74rem;padding:6px 8px;border-bottom:1px solid var(--rule);white-space:nowrap;text-align:right}
+th.l,td.l{text-align:left}
+th.grp{text-align:center;border-bottom:0;color:var(--ink-2);font-weight:700}
+td{padding:6px 8px;border-bottom:1px solid var(--grid);white-space:nowrap;text-align:right}
+td.sep,th.sep{border-left:1px solid var(--rule)}
+.row{cursor:pointer}
+.row:hover td.l{text-decoration:underline}
+.row[aria-selected="true"] td.l{font-weight:700;color:var(--now)}
+.tag{font-size:.68rem;color:var(--ink-3);margin-left:6px}
+.sims{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px 24px}
+.sim b{font-family:var(--f-num);font-size:1.6rem;font-weight:600;display:block;line-height:1.2}
+.sim span{font-size:.8rem;color:var(--ink-3)}
+.sim small{display:block;font-size:.8rem;color:var(--ink-2)}
+.method{display:grid;gap:8px;font-size:.88rem;color:var(--ink-2)}
+.method p{margin:0;max-width:78ch}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">天井後のセクター・ローテーション · <span id="asof" class="num"></span> 時点</div>
+  <h1>バブルが終わった後、資金はどこへ向かったか</h1>
+  <p class="lede">日経平均（米国はS&amp;P500）の天井を0日目として、業種ごとの株価が市場平均をどれだけ上回ったか・下回ったかを、ITバブル（2000年）、リーマン前（2007年）、今回（2026年）で重ねました。</p>
+</header>
+
+<section class="panel" aria-labelledby="f-h">
+  <h2 id="f-h">わかったこと</h2>
+  <ul class="findings">
+    <li><strong>ITバブル後は電力・ガス・鉄道が3年で+50〜80%</strong><p>2000年4月の天井から3年間、日経平均は一時−63%まで下げましたが、電力は市場平均を+70%、ガスは+78%、鉄道は+48%上回りました。投稿の「電力すごい」はデータでも確認できます。逆に主役だったIT・ネットは−84%、半導体は−69%でした。</p></li>
+    <li><strong>今回もディフェンシブ業種に資金が移っている</strong><p>2026年6月25日の天井から99営業日で、半導体は市場平均を−49%、電子部品は−47%下回りました。上回ったのはレジャー・ゲーム、海運、医薬品、小売、鉄道。電力・ガスも+8%で、2000年の同じ時期（+11%、+4%）と同じくらいです。</p></li>
+    <li><strong>業種の並びはITバブルよりリーマン前に近い</strong><p>天井から同じ日数で業種の順位を比べると、一致率はリーマン前が+0.57、ITバブルが+0.10。2000年は日本の主役が通信・ネットで、半導体の下落は遅れて来たためです。主役業種を除いて比べるとITバブルは+0.31に上がります。</p></li>
+    <li><strong>米国ではテクノロジーと生活必需品が2000年とほぼ同じ動き</strong><p>S&amp;P500の天井（2026年10月6日）から33営業日で、テクノロジー(XLK)は市場比−16.5%、生活必需品(XLP)は+25.1%、公益(XLU)は+17.4%。2000年の同じ時期は−16.1%、+24.6%、+19.7%でした。</p></li>
+  </ul>
+</section>
+
+<section class="panel" aria-labelledby="c-h">
+  <div class="controls">
+    <span class="ctl-label">市場</span>
+    <div class="seg" role="group" aria-label="市場">
+      <button id="mjp" type="button" aria-pressed="true" data-m="日本">日本</button>
+      <button id="mus" type="button" aria-pressed="false" data-m="米国">米国</button>
+    </div>
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="業種"></div>
+  <div class="charthead">
+    <div><h2 id="c-h"></h2><div class="note" id="c-sub"></div></div>
+    <div class="legend">
+      <span><i style="border-color:var(--now);border-top-width:3px"></i>今回（<span id="lg-now"></span>）</span>
+      <span><i style="border-color:var(--e2000)"></i>ITバブル（<span id="lg-2000"></span>）</span>
+      <span><i style="border-color:var(--e2007)"></i>リーマン前（<span id="lg-2007"></span>）</span>
+    </div>
+  </div>
+  <div class="chart" id="main"></div>
+  <p class="note" id="c-note"></p>
+</section>
+
+<section class="panel" aria-labelledby="t-h">
+  <h2 id="t-h">業種ごとの市場平均比（天井からの累積）</h2>
+  <p class="note" id="t-note"></p>
+  <div class="tablewrap"><table id="tbl"></table></div>
+</section>
+
+<section class="panel" aria-labelledby="s-h">
+  <h2 id="s-h">ローテーション一致率</h2>
+  <p class="note">今回の天井からの業種の順位と、過去の天井から同じ日数での順位を比べたスピアマン順位相関です（+1で完全一致、0で無関係）。下のグラフは、過去の天井後の何日目の並びが今と一番似ているかを示します。</p>
+  <div class="sims" id="sims"></div>
+  <div class="chart" id="lag"></div>
+</section>
+
+<section class="panel method" aria-labelledby="m-h">
+  <h2 id="m-h">計算方法</h2>
+  <p><b>業種バスケット</b>：日本は22業種、各2〜8銘柄の大型株を等ウェイトで合成。天井の日に株価がある銘柄だけを使うので、2000年は銘柄数が少ない業種があります（電力は東京・中部・関西の3社など）。米国はSPDRのセクターETF。</p>
+  <p><b>市場平均比</b>：日本は日経平均が半導体の比重が大きく比較の物差しに向かないため、全22業種の構成銘柄の等ウェイト平均に対する相対値。米国はS&amp;P500に対する相対値。天井の日を0%にそろえています。</p>
+  <p><b>データ</b>：Yahoo Finance の配当調整後終値。2002〜2005年の合併時などに起きる1日±44%超の段差はデータの不整合として除外しました。過去の動きは今後を保証しません。</p>
+</section>
+</div>
+
+<script>
+const DATA = __DATA__;
+const $ = s => document.querySelector(s);
+const EV = ["今回(2026)", "ITバブル(2000)", "リーマン前(2007)"];
+const COL = { "今回(2026)": "--now", "ITバブル(2000)": "--e2000", "リーマン前(2007)": "--e2007" };
+const DEF = { "日本": "電力", "米国": "公益(XLU)" };
+const st = { m: "日本", sec: "電力" };
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const pct = (v, d = 1) => v == null || isNaN(v) ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(d) + "%";
+const ymd = s => s.replaceAll("-", "/");
+const M = () => DATA.markets[st.m];
+const at = (ev, sec, day) => { const e = M().events[ev], i = e.days.indexOf(day); return i < 0 ? null : e.rel[sec][i]; };
+function niceTicks(lo, hi, n = 5) {
+  const span = hi - lo, raw = span / n, mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => span / s <= n + 1);
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(10)); return out;
+}
+
+function drawChips() {
+  const names = Object.keys(M().events["ITバブル(2000)"].rel), lead = new Set(M().leaders), def = new Set(M().defensive);
+  $("#chips").innerHTML = names.map(n => `<button type="button" data-s="${n}" aria-pressed="${n === st.sec}">${n}${lead.has(n) ? " ★" : ""}</button>`).join("");
+  $("#chips").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { st.sec = b.dataset.s; render(); }));
+}
+
+function drawMain() {
+  const box = $("#main"); box.innerHTML = "";
+  const m = M(), sec = st.sec;
+  const width = Math.max(320, box.clientWidth), height = Math.round(Math.min(430, Math.max(280, width * 0.46)));
+  const pad = { l: 52, r: 16, t: 14, b: 30 };
+  const x0 = -250, x1 = 750;
+  const series = EV.map(ev => { const e = m.events[ev]; return { ev, pts: e.days.map((d, i) => [d, e.rel[sec][i]]).filter(p => p[1] != null && p[0] >= x0 && p[0] <= x1) }; });
+  const vals = series.flatMap(s => s.pts.map(p => p[1]));
+  let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals); const g = (hi - lo) * .06; lo -= g; hi += g;
+  const X = d => pad.l + (d - x0) / (x1 - x0) * (width - pad.l - pad.r);
+  const Y = v => pad.t + (1 - (v - lo) / (hi - lo)) * (height - pad.t - pad.b);
+  const svg = el("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": `${sec}の天井後の市場平均比` }, box);
+  const gg = el("g", { class: "grid" }, svg), ax = el("g", { class: "axis" }, svg);
+  niceTicks(lo, hi).forEach(v => { const y = Y(v); el("line", { x1: pad.l, x2: width - pad.r, y1: y, y2: y }, gg);
+    const t = el("text", { x: pad.l - 8, y: y + 4, "text-anchor": "end" }, ax); t.textContent = pct(v, 0); });
+  el("line", { x1: pad.l, x2: width - pad.r, y1: Y(0), y2: Y(0), stroke: css("--ink-3"), "stroke-width": 1 }, svg);
+  [-250, 0, 250, 500, 750].forEach(d => { const t = el("text", { x: X(d), y: height - 8, "text-anchor": "middle" }, ax);
+    t.textContent = d === 0 ? "天井" : d < 0 ? "1年前" : `${d / 250}年後`; });
+  el("line", { x1: X(0), x2: X(0), y1: pad.t, y2: height - pad.b, stroke: css("--ink-3"), "stroke-dasharray": "3 3" }, svg);
+  const dpath = pts => pts.map((p, i) => `${i ? "L" : "M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("");
+  [...series].reverse().forEach(s => el("path", { d: dpath(s.pts), fill: "none", stroke: css(COL[s.ev]), "stroke-width": s.ev === EV[0] ? 3 : 2, "stroke-linejoin": "round" }, svg));
+  const nowLast = series[0].pts[series[0].pts.length - 1];
+  if (nowLast) {
+    el("circle", { cx: X(nowLast[0]), cy: Y(nowLast[1]), r: 5, fill: css("--now"), stroke: css("--panel"), "stroke-width": 2 }, svg);
+    const t = el("text", { x: X(nowLast[0]) + 9, y: Y(nowLast[1]) + 4, fill: css("--ink"), "font-size": 12, "font-family": css("--f-num"), "font-weight": 600 }, svg);
+    t.textContent = `今 ${pct(nowLast[1])}`;
+  }
+  // hover
+  const cross = el("line", { y1: pad.t, y2: height - pad.b, stroke: css("--ink-3"), opacity: 0 }, svg);
+  const dots = EV.map(ev => el("circle", { r: 4, fill: css(COL[ev]), stroke: css("--panel"), "stroke-width": 2, opacity: 0 }, svg));
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+  const hit = el("rect", { x: pad.l, y: pad.t, width: width - pad.l - pad.r, height: height - pad.t - pad.b, fill: "transparent" }, svg);
+  const move = e => {
+    const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) * width / r.width;
+    const d = Math.round(x0 + (sx - pad.l) / (width - pad.l - pad.r) * (x1 - x0));
+    cross.setAttribute("x1", X(d)); cross.setAttribute("x2", X(d)); cross.setAttribute("opacity", .6);
+    let h = `<div class="k">${d === 0 ? "天井の日" : d > 0 ? `天井から${d}営業日後` : `天井の${-d}営業日前`}</div>`;
+    EV.forEach((ev, k) => { const v = at(ev, sec, d);
+      if (v == null) { dots[k].setAttribute("opacity", 0); return; }
+      dots[k].setAttribute("cx", X(d)); dots[k].setAttribute("cy", Y(v)); dots[k].setAttribute("opacity", 1);
+      h += `<div><span class="sw" style="background:var(${COL[ev]})"></span>${ev} <b class="num">${pct(v)}</b></div>`; });
+    tip.innerHTML = h; tip.hidden = false;
+    const bw = box.clientWidth, px = X(d) * bw / width;
+    tip.style.left = (px > bw * .6 ? px - tip.offsetWidth - 12 : px + 12) + "px"; tip.style.top = "8px";
+  };
+  hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("opacity", 0); dots.forEach(d => d.setAttribute("opacity", 0)); });
+
+  const D = m.D, c = m.events["ITバブル(2000)"].counts[sec];
+  $("#c-h").textContent = `${sec} の${m.base}比`;
+  $("#c-sub").innerHTML = `今回 天井から${D}営業日で <b class="num">${pct(at(EV[0], sec, D))}</b> · ITバブルの同じ時期 <span class="num">${pct(at(EV[1], sec, D))}</span>、3年後 <span class="num">${pct(at(EV[1], sec, 750))}</span> · リーマン前の同じ時期 <span class="num">${pct(at(EV[2], sec, D))}</span>、3年後 <span class="num">${pct(at(EV[2], sec, 750))}</span>`;
+  $("#c-note").textContent = `天井の日を0%として、${m.base}をどれだけ上回ったか（上）・下回ったか（下）。2000年のバスケットは${c}銘柄。★はそのバブルの主役業種。`;
+}
+
+function drawTable() {
+  const m = M(), D = m.D, names = Object.keys(m.events["ITバブル(2000)"].rel), def = new Set(m.defensive), lead = new Set(m.leaders);
+  const cols = [[EV[0], D], [EV[1], D], [EV[1], 250], [EV[1], 750], [EV[2], D], [EV[2], 250], [EV[2], 750]];
+  const rows = names.map(n => ({ n, v: cols.map(([e, d]) => at(e, n, d)) })).sort((a, b) => (b.v[0] ?? -9) - (a.v[0] ?? -9));
+  const cell = (v, sep) => {
+    if (v == null) return `<td class="num${sep ? " sep" : ""}">—</td>`;
+    const a = Math.min(1, Math.abs(v) / 0.6) * 55;
+    return `<td class="num${sep ? " sep" : ""}" style="background:color-mix(in oklab, var(${v >= 0 ? "--pos" : "--neg"}) ${a.toFixed(0)}%, transparent)">${pct(v, 0)}</td>`;
+  };
+  $("#t-note").textContent = `${m.base}に対する累積の相対リターン。今回の${D}営業日目が大きい順。1年=250営業日、3年=750営業日。行を選ぶと上のチャートに表示します。`;
+  $("#tbl").innerHTML = `<thead><tr><th class="l"></th><th class="grp sep">今回</th><th class="grp sep" colspan="3">ITバブル（${ymd(m.events[EV[1]].peak)}天井）</th><th class="grp sep" colspan="3">リーマン前（${ymd(m.events[EV[2]].peak)}天井）</th></tr>
+    <tr><th class="l">業種</th><th class="sep">${D}日目</th><th class="sep">${D}日目</th><th>1年後</th><th>3年後</th><th class="sep">${D}日目</th><th>1年後</th><th>3年後</th></tr></thead><tbody>` +
+    rows.map(r => `<tr class="row" tabindex="0" data-s="${r.n}" aria-selected="${r.n === st.sec}"><td class="l">${r.n}${lead.has(r.n) ? '<span class="tag">★主役</span>' : def.has(r.n) ? '<span class="tag">守り</span>' : ""}</td>` +
+      r.v.map((v, i) => cell(v, [0, 1, 4].includes(i))).join("") + "</tr>").join("") + "</tbody>";
+  $("#tbl").querySelectorAll(".row").forEach(r => {
+    const go = () => { st.sec = r.dataset.s; render(); $("#main").scrollIntoView({ behavior: "smooth", block: "center" }); };
+    r.addEventListener("click", go); r.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+}
+
+function drawSims() {
+  const m = M();
+  $("#sims").innerHTML = [EV[1], EV[2]].map(ev => {
+    const best = m.lag[ev].reduce((a, b) => b[1] > a[1] ? b : a);
+    return `<div class="sim"><span>${ev}と（天井から${m.D}日目どうし）</span><b>${m.sims[ev] >= 0 ? "+" : ""}${m.sims[ev].toFixed(2)}</b>
+      <small>主役業種を除くと ${m.sims_ex[ev] >= 0 ? "+" : ""}${m.sims_ex[ev].toFixed(2)} · 最も近いのは天井から${best[0]}日目（${best[1] >= 0 ? "+" : ""}${best[1].toFixed(2)}）</small></div>`;
+  }).join("");
+  const box = $("#lag"); box.innerHTML = "";
+  const width = Math.max(320, box.clientWidth), height = 220, pad = { l: 44, r: 16, t: 12, b: 30 };
+  const X = d => pad.l + d / 750 * (width - pad.l - pad.r), Y = v => pad.t + (1 - (v + 1) / 2) * (height - pad.t - pad.b);
+  const svg = el("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": "過去の天井後の各日と今の業種順位の一致率" }, box);
+  const gg = el("g", { class: "grid" }, svg), ax = el("g", { class: "axis" }, svg);
+  [-1, -0.5, 0, 0.5, 1].forEach(v => { el("line", { x1: pad.l, x2: width - pad.r, y1: Y(v), y2: Y(v) }, gg);
+    const t = el("text", { x: pad.l - 8, y: Y(v) + 4, "text-anchor": "end" }, ax); t.textContent = (v > 0 ? "+" : "") + v.toFixed(1); });
+  [0, 250, 500, 750].forEach(d => { const t = el("text", { x: X(d), y: height - 8, "text-anchor": "middle" }, ax); t.textContent = d ? `${d / 250}年後` : "天井"; });
+  el("line", { x1: X(m.D), x2: X(m.D), y1: pad.t, y2: height - pad.b, stroke: css("--now"), "stroke-dasharray": "3 3" }, svg);
+  const lt = el("text", { x: X(m.D) + 5, y: height - pad.b - 6, fill: css("--ink-2"), "font-size": 11 }, svg); lt.textContent = `今回の経過日数（${m.D}日）`;
+  [EV[1], EV[2]].forEach(ev => {
+    const l = m.lag[ev];
+    el("path", { d: l.map((p, i) => `${i ? "L" : "M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(""), fill: "none", stroke: css(COL[ev]), "stroke-width": 2 }, svg);
+    const best = l.reduce((a, b) => b[1] > a[1] ? b : a);
+    el("circle", { cx: X(best[0]), cy: Y(best[1]), r: 4.5, fill: css(COL[ev]), stroke: css("--panel"), "stroke-width": 2 }, svg);
+    const t = el("text", { x: X(best[0]), y: Y(best[1]) - 9, "text-anchor": "middle", fill: css("--ink"), "font-size": 11, "font-family": css("--f-num") }, svg);
+    t.textContent = `${ev.slice(0, -6)} ${best[0]}日目`;
+  });
+}
+
+function render() {
+  document.querySelectorAll("[data-m]").forEach(b => b.setAttribute("aria-pressed", b.dataset.m === st.m));
+  const m = M();
+  $("#asof").textContent = ymd(m.asof);
+  $("#lg-now").textContent = ymd(m.events[EV[0]].peak) + "天井";
+  $("#lg-2000").textContent = ymd(m.events[EV[1]].peak);
+  $("#lg-2007").textContent = ymd(m.events[EV[2]].peak);
+  drawChips(); drawMain(); drawTable(); drawSims();
+}
+document.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => { st.m = b.dataset.m; st.sec = DEF[st.m]; render(); }));
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 150); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+render();
+</script>
