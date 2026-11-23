@@ -13,7 +13,7 @@ SRC = ROOT / "output" / "similar_market_web.json"
 TPL = ROOT / "scripts" / "similar_market_template.html"
 OUT = ROOT / "output" / "similar_market.html"
 
-KEYS = ("name", "kind", "ticker", "start", "end", "score", "shape_r", "ret5_r", "amp", "fwd60")
+KEYS = ("name", "kind", "ticker", "start", "end", "score", "shape_r", "ret5_r", "amp", "fwd60", "fwd120", "fwd250", "dd250")
 
 
 def slim(r: dict, with_fwd: bool = True) -> dict:
@@ -42,6 +42,7 @@ def main() -> None:
             "close": [round(x, 1) for x in v["query"]["close"]],
             "hist": [slim(m) for m in hist + extra],
             "now": [slim(m, False) for m in v["now"][:10]],
+            "episodes": [slim(m) for m in v["episodes"]],
             "summary": {k: (round(x, 4) if isinstance(x, float) else [round(y, 4) for y in x] if isinstance(x, list) else x)
                         for k, x in s.items()},
         }

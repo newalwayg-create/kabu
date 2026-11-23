@@ -34,7 +34,7 @@ header{display:grid;gap:10px}
 .kpi b{font-family:var(--f-num);font-size:1.35rem;font-weight:600}
 .kpi span{font-size:.75rem;color:var(--ink-3)}
 .panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:18px clamp(12px,2.5vw,22px);display:grid;gap:14px;min-width:0}
-.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 22px;margin:0;padding:0;list-style:none}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:12px 22px;margin:0;padding:0;list-style:none}
 .findings li{display:grid;gap:2px;min-width:0}
 .findings strong{font-family:var(--f-disp);font-size:1rem}
 .findings p{margin:0;color:var(--ink-2);font-size:.9rem}
@@ -100,6 +100,7 @@ td.r,th.r{text-align:right}
   <ul class="findings">
     <li><strong>同じ形をした過去の局面は2024年夏</strong><p>1年の形で過去の局面を探すと、日経平均自身の 2023年8月〜2024年8月（令和のブラックマンデーで終わる1年）と、同時期のディスコ・東京エレクトロンが上位に並びます。急騰の後に高値もみ合いを経て急落、という順番が同じです。</p></li>
     <li><strong>いま同じ形で動いているのは半導体・電子部品</strong><p>同時期で比べると、イビデン、東京エレクトロン、村田製作所の一致率が90%を超えます。台湾加権・KOSPI・SOX指数も80%台で、今の日経平均は「AI半導体相場」そのものの形です。値幅は日経平均の2〜4倍あります。</p></li>
+    <li><strong>ITバブル・リーマンとは「似ているが一番ではない」</strong><p>1年の形では、ITバブル期のSOX指数（〜2000年8月）が74.8%、リーマン前のDAX（〜2007年11月）が74.5%で、約100万通りの中で上位0.01%に入ります。ただしNASDAQ（〜2000年6月）や日経平均（〜2007年7月）は67〜69%で、2024年夏の80%には届きません。どちらも当てはまるのは天井圏の段階で、本格的な暴落はその後に来ています。</p></li>
     <li><strong>その後の動きはばらばら</strong><p>類似上位20局面の「その後60営業日」は、1年の形で上昇55%・中央値+0.4%、半年の形で上昇65%・中央値+2.4%。形が似ていても次の方向は決まりません。下落が続いた例（東京エレクトロン2024年8月以降 −20%、SOX 1995年末 −23%）も反発した例もあります。</p></li>
   </ul>
 </section>
@@ -138,6 +139,7 @@ td.r,th.r{text-align:right}
     <div class="seg" role="group" aria-label="一覧の種類">
       <button id="lhist" type="button" aria-pressed="true" data-l="hist">過去の類似局面</button>
       <button id="lnow" type="button" aria-pressed="false" data-l="now">同時期に連動</button>
+      <button id="lep" type="button" aria-pressed="false" data-l="episodes">有名な暴落</button>
     </div>
   </div>
   <p class="note" id="listnote"></p>
@@ -181,7 +183,7 @@ const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (c
 const ymd = s => s.replaceAll("-", "/");
 
 function W() { return DATA.windows[st.w]; }
-function items() { return st.list === "hist" ? W().hist : W().now; }
+function items() { return W()[st.list]; }
 function current() { return items()[st.sel] || items()[0]; }
 
 // 類似局面の対数価格を日経平均の対数スケールへ写す
@@ -266,17 +268,19 @@ function drawMain() {
 }
 
 function drawTable() {
-  const it = items(), hist = st.list === "hist";
-  $("#listnote").textContent = hist
-    ? "基準期間と重ならない過去の期間から探した結果。行を選ぶと上のチャートに重ねます。"
+  const it = items(), ep = st.list === "episodes", hist = st.list !== "now";
+  $("#listnote").textContent = ep
+    ? "各暴落の前後で、今の形に最も近い期間を銘柄ごとに選んだ結果。参考までに、過去の全期間・全銘柄（約100万通り）の中で一致率67%は上位1%、72%は上位0.1%に当たります（1年の場合）。"
+    : hist ? "基準期間と重ならない過去の期間から探した結果。行を選ぶと上のチャートに重ねます。"
     : "基準期間と同じ期間どうしの比較。今まさに日経平均と同じ形で動いている銘柄です。";
-  const head = `<thead><tr><th>#</th><th>銘柄</th>${hist ? "<th>期間</th>" : ""}<th>一致率</th><th class="r">形状相関</th><th class="r">5日リターン相関</th><th class="r">値幅倍率</th>${hist ? '<th class="r">その後60日</th>' : ""}</tr></thead>`;
+  const head = `<thead><tr><th>#</th><th>銘柄</th>${hist ? "<th>期間</th>" : ""}<th>一致率</th><th class="r">形状相関</th><th class="r">5日リターン相関</th><th class="r">値幅倍率</th>${hist ? '<th class="r">その後60日</th>' : ""}${ep ? '<th class="r">120日</th><th class="r">250日</th><th class="r">1年内の最大下落</th>' : ""}</tr></thead>`;
   const rows = it.map((m, i) => `<tr class="row" tabindex="0" data-i="${i}" aria-selected="${i === st.sel}">
     <td class="num">${i + 1}</td><td>${m.name}<br><span class="kindtag">${m.kind}</span></td>
     ${hist ? `<td class="num">${ymd(m.start)}<br>〜${ymd(m.end)}</td>` : ""}
-    <td class="num"><span class="bar" style="width:${Math.max(4, (m.score - 0.6) / 0.35 * 70)}px"></span>${(m.score * 100).toFixed(1)}%</td>
+    <td class="num"><span class="bar" style="width:${Math.max(4, Math.min(70, (m.score - 0.4) / 0.55 * 70))}px"></span>${(m.score * 100).toFixed(1)}%</td>
     <td class="r num">${m.shape_r.toFixed(3)}</td><td class="r num">${m.ret5_r.toFixed(3)}</td><td class="r num">${m.amp.toFixed(2)}</td>
-    ${hist ? `<td class="r num ${m.fwd60 == null ? "" : m.fwd60 >= 0 ? "pos" : "neg"}">${pct(m.fwd60)}</td>` : ""}</tr>`).join("");
+    ${hist ? `<td class="r num ${m.fwd60 == null ? "" : m.fwd60 >= 0 ? "pos" : "neg"}">${pct(m.fwd60)}</td>` : ""}
+    ${ep ? [m.fwd120, m.fwd250, m.dd250].map(v => `<td class="r num ${v == null ? "" : v >= 0 ? "pos" : "neg"}">${pct(v)}</td>`).join("") : ""}</tr>`).join("");
   $("#tbl").innerHTML = head + "<tbody>" + rows + "</tbody>";
   $("#tbl").querySelectorAll(".row").forEach(r => {
     const go = () => { st.sel = +r.dataset.i; render(false); $("#main").scrollIntoView({ behavior: "smooth", block: "center" }); };

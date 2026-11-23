@@ -147,6 +147,47 @@ def search(px: pd.DataFrame, w: int) -> tuple[pd.DataFrame, pd.Series, pd.DataFr
     return df, qpath, now
 
 
+# 有名な暴落局面: (名前, 窓の終わりを探す期間, 比較する銘柄)
+EPISODES = [
+    ("ITバブル崩壊", "1999-07-01", "2001-12-31", ["^IXIC", "^NDX", "^SOX", "^N225", "CSCO", "INTC"]),
+    ("リーマンショック", "2007-06-01", "2009-06-30", ["^GSPC", "^DJI", "^N225", "^GDAXI", "^HSI", "^SOX"]),
+    ("ブラックマンデー", "1987-08-01", "1988-03-31", ["^GSPC", "^N225"]),
+    ("日本のバブル崩壊", "1989-10-01", "1990-12-31", ["^N225"]),
+]
+
+
+def episodes(px: pd.DataFrame, w: int) -> list[dict]:
+    """各暴落局面の中で、今の形に最も近い窓を探す (窓の終わりが指定期間内のもの)."""
+    q = np.log(px[QUERY].dropna().values[-w:])
+    qr, q_range = q[5:] - q[:-5], q.max() - q.min()
+    rows = []
+    for ep, a, b, tks in EPISODES:
+        for t in tks:
+            s = px[t].dropna()
+            s = s[s > 0]
+            lx = np.log(s.values)
+            shape = rolling_corr(lx, q)
+            rr = rolling_corr(lx[5:] - lx[:-5], qr)
+            win = np.lib.stride_tricks.sliding_window_view(lx, w)
+            rng = win.max(1) - win.min(1)
+            score = W_SHAPE * shape + W_RET * rr
+            ends = s.index[w - 1:]
+            m = (ends >= a) & (ends <= b)
+            if not m.any():
+                continue
+            i = int(np.nanargmax(np.where(m, score, -9)))
+            e = i + w - 1
+            after = lambda k: float(np.expm1(lx[e + k] - lx[e])) if e + k < len(lx) else None
+            rows.append(dict(
+                ticker=t, name=label(t), kind=ep, start=s.index[i].date(), end=ends[i].date(),
+                score=score[i], shape_r=shape[i], ret5_r=rr[i], amp=rng[i] / q_range,
+                fwd60=after(FWD), fwd120=after(120), fwd250=after(250),
+                dd250=float(np.expm1(lx[e:e + 251].min() - lx[e])),
+                path=(lx[i:e + 1] - lx[e]).tolist(), fwd_path=(lx[e:e + FWD + 1] - lx[e]).tolist(),
+            ))
+    return rows
+
+
 def summarize(df: pd.DataFrame, n: int = 20) -> dict:
     top = df[df["fwd60"].notna()].head(n)
     paths = [p for p in top["fwd_path"] if len(p) == FWD + 1]
@@ -190,6 +231,7 @@ def main() -> None:
             },
             "summary": summ,
             "now": now.head(15).to_dict("records"),
+            "episodes": [{k: (str(v) if k in ("start", "end") else v) for k, v in r.items()} for r in episodes(px, w)],
         }
         md.append(f"\n## 直近 {w} 営業日 ({qpath.index[0].date()} 〜 {qpath.index[-1].date()})\n")
         md.append("### 同時期に同じ形で動いている銘柄 (連動の強さ)\n")
