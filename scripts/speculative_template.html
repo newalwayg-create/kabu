@@ -1,0 +1,304 @@
+<title>思惑相場パターンの検証</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 結論 → データで描き直した「思惑相場パターン」 → 銘柄ごとの株価と半値ライン → 統計 → 2026年の銘柄表 */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#111418; --ink-2:#4b525c; --ink-3:#7c8590;
+  --rule:#dfe3e8; --grid:#eceff3; --gline:#008300; --bline:#2a78d6; --stock:#eb6834; --band:#7c8590;
+  --up:#008300; --down:#e34948;
+  --f-disp:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121417; --panel:#1a1d21; --ink:#eef0f2; --ink-2:#b9c0c8; --ink-3:#8a929c;
+  --rule:#2c3138; --grid:#24282e; --gline:#0ca30c; --bline:#3987e5; --stock:#d95926; --band:#8a929c;
+  --up:#0ca30c; --down:#e66767; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121417; --panel:#1a1d21; --ink:#eef0f2; --ink-2:#b9c0c8; --ink-3:#8a929c;
+  --rule:#2c3138; --grid:#24282e; --gline:#0ca30c; --bline:#3987e5; --stock:#d95926; --band:#8a929c;
+  --up:#0ca30c; --down:#e66767; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2{font-family:var(--f-disp);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:900}
+h2{font-size:1.25rem;font-weight:700}
+.eyebrow{font-size:.75rem;letter-spacing:.12em;color:var(--ink-3);font-weight:500}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+header{display:grid;gap:10px}
+.lede{color:var(--ink-2);max-width:70ch;margin:0}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:18px clamp(12px,2.5vw,22px);display:grid;gap:14px;min-width:0}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px 24px;margin:0;padding:0;list-style:none}
+.findings li{display:grid;gap:2px;min-width:0}
+.findings strong{font-family:var(--f-disp);font-size:1rem}
+.findings p{margin:0;color:var(--ink-2);font-size:.9rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:.82rem;border:1px solid var(--rule);background:transparent;color:var(--ink-2);border-radius:999px;padding:3px 11px;cursor:pointer}
+.chips button[aria-pressed="true"]{border-color:var(--stock);color:var(--ink);font-weight:700}
+button:focus-visible{outline:2px solid var(--bline);outline-offset:2px}
+.charthead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;align-items:baseline}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.85rem;color:var(--ink-2)}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+.legend i.box{height:10px;border:0;opacity:.35;vertical-align:-1px}
+.chart{position:relative;width:100%;min-width:0}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.axis text{fill:var(--ink-3);font-family:var(--f-num);font-size:11px}
+.grid line{stroke:var(--grid);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;font-size:.8rem;line-height:1.55;box-shadow:0 4px 14px rgba(0,0,0,.12);min-width:170px;z-index:2}
+.tip .k{color:var(--ink-3)}
+.tip .sw{display:inline-block;width:10px;height:2px;vertical-align:middle;margin-right:6px}
+.note{font-size:.82rem;color:var(--ink-2);margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px 24px}
+.stat b{font-family:var(--f-num);font-size:1.6rem;font-weight:600;display:block;line-height:1.25}
+.stat span{font-size:.8rem;color:var(--ink-3)}
+.split{display:flex;height:26px;border-radius:6px;overflow:hidden;gap:2px}
+.split div{display:flex;align-items:center;justify-content:center;font-size:.78rem;color:#fff;font-family:var(--f-num);min-width:0}
+.tablewrap{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th{font-weight:500;color:var(--ink-3);font-size:.75rem;padding:6px 8px;border-bottom:1px solid var(--rule);white-space:nowrap;text-align:right}
+td{padding:7px 8px;border-bottom:1px solid var(--grid);white-space:nowrap;text-align:right}
+th.l,td.l{text-align:left}
+.pill{display:inline-block;font-size:.72rem;padding:1px 8px;border-radius:999px;border:1px solid currentColor}
+.pg{color:var(--gline)} .pb{color:var(--bline)} .pm{color:var(--ink-3)} .pr{color:var(--down)}
+.method{display:grid;gap:8px;font-size:.88rem;color:var(--ink-2)}
+.method p{margin:0;max-width:78ch}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">急騰株の天井後 · 日本株 <span id="univ" class="num"></span>銘柄 · <span id="asof" class="num"></span> 時点</div>
+  <h1>「思惑相場の基本パターン」は本当か</h1>
+  <p class="lede">「急騰して天井 → 上げ幅の5割まで下げる → 保ち合い（緑ライン）か、ダラダラ下げ（青ライン）に分かれる」という図を、1999年以降の日本株の急騰<span id="nev" class="num"></span>件で確かめました。あわせて、投稿（2026年10月6日）で緑ラインと言われた村田製作所・TDK、青ラインのキオクシアがその後どうなったかを見ます。</p>
+</header>
+
+<section class="panel" aria-labelledby="f-h">
+  <h2 id="f-h">わかったこと</h2>
+  <ul class="findings" id="findings"></ul>
+</section>
+
+<section class="panel" aria-labelledby="p-h">
+  <div class="charthead">
+    <div><h2 id="p-h">データで描き直した思惑相場のパターン</h2>
+    <div class="note">縦軸は上げ幅の中での位置。1が天井、0.5が半値、0が上がり始めの安値（起点）。</div></div>
+    <div class="legend">
+      <span><i class="box" style="background:var(--band)"></i>全急騰の25〜75%</span>
+      <span><i style="border-color:var(--gline)"></i>緑（保ち合い）の中央値</span>
+      <span><i style="border-color:var(--bline)"></i>青（ダラダラ下げ）の中央値</span>
+      <span><i style="border-color:var(--stock);border-top-width:3px"></i><span id="lg-stock"></span></span>
+    </div>
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="重ねる銘柄"></div>
+  <div class="chart" id="pattern"></div>
+</section>
+
+<section class="panel" aria-labelledby="s-h">
+  <div class="charthead">
+    <div><h2 id="s-h"></h2><div class="note" id="s-sub"></div></div>
+    <div class="legend">
+      <span><i style="border-color:var(--stock)"></i>株価</span>
+      <span><i style="border-color:var(--ink-3);border-top-style:dashed"></i>天井・半値・起点</span>
+    </div>
+  </div>
+  <div class="chart" id="price"></div>
+</section>
+
+<section class="panel" aria-labelledby="st-h">
+  <h2 id="st-h">数字で見るパターン</h2>
+  <div class="stats" id="stats"></div>
+  <div>
+    <div class="note" style="margin-bottom:6px">半値に下げてから<span id="after"></span>営業日後の位置</div>
+    <div class="split" id="split"></div>
+  </div>
+  <div class="tablewrap"><table id="splittbl"></table></div>
+  <p class="note">緑・中間・青が決まった時点（半値タッチの60営業日後）から先の騰落率の中央値。緑だから上がりやすい、青だから下がり続けるという差はほとんどありません。</p>
+</section>
+
+<section class="panel" aria-labelledby="w-h">
+  <h2 id="w-h">2026年に急騰した主な銘柄の現在地</h2>
+  <div class="tablewrap"><table id="watch"></table></div>
+  <p class="note">位置 x は上げ幅の中での位置（1＝天井、0.5＝半値、0＝起点、マイナスは起点割れ）。0.4以上を緑、0.25未満を青としています。</p>
+</section>
+
+<section class="panel method" aria-labelledby="m-h">
+  <h2 id="m-h">計算方法</h2>
+  <p><b>急騰の定義</b>：前後60営業日で最も高い終値を天井とし、その前60営業日以内の最安値（起点）から+50%以上上げたもの。上昇日数の中央値は約2か月半で、図の「約30日」よりやや長めの急騰も含みます。</p>
+  <p><b>緑・青の判定</b>：天井から120営業日以内に初めて半値（位置0.5）を割った日を「半値タッチ」とし、その60営業日後に位置0.4以上なら緑、0.25未満なら青、その間を中間としました。</p>
+  <p><b>対象とデータ</b>：このリポジトリで扱ってきた日本株（大型株・テーマ株・高配当株など）。Yahoo Finance の配当調整後終値で、合併時などの1日±45%超の段差を含む急騰は除外。小型の仕手株は少ないため、小型株だけで見ると結果が変わる可能性があります。</p>
+</section>
+</div>
+
+<script>
+const DATA = __DATA__;
+const $ = s => document.querySelector(s);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const pct = (v, d = 0) => v == null || isNaN(v) ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(d) + "%";
+const P = v => v == null ? "—" : Math.round(v * 100) + "%";
+const ymd = s => s ? s.replaceAll("-", "/") : "—";
+const yen = v => Math.round(v).toLocaleString("ja-JP");
+const S = DATA.stats;
+let sel = DATA.watch.findIndex(w => w.ticker === "6981.T"); if (sel < 0) sel = 0;
+const branch = x => x == null ? ["—", "pm"] : x >= DATA.params.green ? ["緑", "pg"] : x < 0 ? ["起点割れ", "pr"] : x < DATA.params.blue ? ["青", "pb"] : ["中間", "pm"];
+function niceTicks(lo, hi, n = 5) {
+  const span = hi - lo, raw = span / n, mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => span / s <= n + 1);
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(10)); return out;
+}
+
+function fillText() {
+  $("#univ").textContent = DATA.universe; $("#asof").textContent = ymd(DATA.asof); $("#nev").textContent = S.n.toLocaleString();
+  const w = n => DATA.watch.find(x => x.name === n) || {};
+  const m = w("村田製作所"), t = w("TDK"), k = w("キオクシアHD");
+  $("#findings").innerHTML = `
+  <li><strong>「5割は落とす」はほぼ確実に起きる</strong><p>急騰の${P(S.touch_rate)}が、天井から半年以内に上げ幅の半分まで下げました。到達までの中央値は${Math.round(S.touch_med)}営業日（約1か月）。半値で止まるとも限らず、天井後120日で吐き出した上げ幅の中央値は${P(S.retrace_med)}です。</p></li>
+  <li><strong>半値の後は緑が多い</strong><p>半値に触れて${DATA.params.after}営業日後には、緑（保ち合い）${P(S.green)}、中間${P(S.mid)}、青（ダラダラ下げ）${P(S.blue)}に分かれました。図の二つの分かれ道は実際にありますが、緑のほうが多数派です。</p></li>
+  <li><strong>ただし緑か青かで、その後の成績はほとんど変わらない</strong><p>分かれた後の騰落率の中央値は、緑が60日で${pct(S.split["緑"].f60, 1)}・190日で${pct(S.split["緑"].f190, 1)}、青が${pct(S.split["青"].f60, 1)}・${pct(S.split["青"].f190, 1)}。緑でも後から青まで崩れたものが1年以内に${P(S.g2b250)}あります。</p></li>
+  <li><strong>投稿の銘柄は、緑だったものも含めて全部崩れた</strong><p>10月6日の位置は村田製作所${m.x_tweet?.toFixed(2)}、TDK${t.x_tweet?.toFixed(2)}と緑、キオクシア${k.x_tweet?.toFixed(2)}は境目でした。今は村田${m.path?.at(-1).toFixed(2)}、TDK${t.path?.at(-1).toFixed(2)}、キオクシア${k.path?.at(-1).toFixed(2)}で、上げ幅のほとんどを吐き出しています。緑から青に崩れる少数派（約2割）の側に入りました。</p></li>`;
+}
+
+function drawChips() {
+  $("#chips").innerHTML = DATA.watch.map((w, i) => `<button type="button" data-i="${i}" aria-pressed="${i === sel}">${w.name}</button>`).join("");
+  $("#chips").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { sel = +b.dataset.i; render(); }));
+}
+
+function drawPattern() {
+  const box = $("#pattern"); box.innerHTML = "";
+  const w = DATA.watch[sel], pre = DATA.band_pre, A = DATA.band_all, G = DATA.band_green, B = DATA.band_blue;
+  const width = Math.max(320, box.clientWidth), height = Math.round(Math.min(420, Math.max(280, width * .44)));
+  const pad = { l: 46, r: 64, t: 14, b: 30 }, x0 = -DATA.params.rally_max, x1 = 250;
+  const stockPts = w.pre.map((v, i) => [i - (w.pre.length - 1), v]).concat(w.path.map((v, i) => [i, v]).slice(1));
+  const ys = stockPts.map(p => p[1]);
+  const lo = Math.min(-0.1, ...ys) - .05, hi = 1.12;
+  const X = d => pad.l + (d - x0) / (x1 - x0) * (width - pad.l - pad.r);
+  const Y = v => pad.t + (1 - (v - lo) / (hi - lo)) * (height - pad.t - pad.b);
+  const svg = el("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": "急騰後の株価の位置の分布" }, box);
+  const gg = el("g", { class: "grid" }, svg), ax = el("g", { class: "axis" }, svg);
+  niceTicks(lo, hi, 6).forEach(v => { el("line", { x1: pad.l, x2: width - pad.r, y1: Y(v), y2: Y(v) }, gg);
+    const t = el("text", { x: pad.l - 8, y: Y(v) + 4, "text-anchor": "end" }, ax); t.textContent = v.toFixed(1); });
+  [[1, "天井"], [0.5, "半値"], [0, "起点"]].forEach(([v, s]) => {
+    el("line", { x1: pad.l, x2: width - pad.r, y1: Y(v), y2: Y(v), stroke: css("--ink-3"), "stroke-dasharray": v === .5 ? "5 3" : "2 3" }, svg);
+    const t = el("text", { x: width - pad.r + 6, y: Y(v) + 4, fill: css("--ink-2"), "font-size": 11, "font-weight": v === .5 ? 700 : 400 }, svg); t.textContent = s;
+  });
+  [-60, 0, 60, 120, 180, 250].forEach(d => { if (d < x0) return; const t = el("text", { x: X(d), y: height - 8, "text-anchor": "middle" }, ax); t.textContent = d === 0 ? "天井" : d < 0 ? `${-d}日前` : `${d}日後`; });
+  el("line", { x1: X(0), x2: X(0), y1: pad.t, y2: height - pad.b, stroke: css("--ink-3") }, svg);
+  // band: pre (reversed index) + after
+  const preDays = pre.med.map((_, k) => -k);
+  const bandPts = (q, fromPre) => fromPre ? preDays.map((d, k) => [d, q[k]]).reverse() : A.med.map((_, k) => [k, q[k]]);
+  const area = (loQ, hiQ, pre_) => { const up = bandPts(hiQ, pre_).filter(p => p[1] != null), dn = bandPts(loQ, pre_).filter(p => p[1] != null).reverse();
+    return up.map((p, i) => `${i ? "L" : "M"}${X(p[0])},${Y(p[1])}`).join("") + dn.map(p => `L${X(p[0])},${Y(p[1])}`).join("") + "Z"; };
+  el("path", { d: area(pre.lo, pre.hi, true), fill: css("--band"), opacity: .18 }, svg);
+  el("path", { d: area(A.lo, A.hi, false), fill: css("--band"), opacity: .18 }, svg);
+  const line = (pts, col, wd, extra = {}) => el("path", { d: pts.filter(p => p[1] != null).map((p, i) => `${i ? "L" : "M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(""), fill: "none", stroke: col, "stroke-width": wd, "stroke-linejoin": "round", ...extra }, svg);
+  line(bandPts(pre.med, true), css("--band"), 1.5);
+  line(G.med.map((v, k) => [k, v]), css("--gline"), 2.25);
+  line(B.med.map((v, k) => [k, v]), css("--bline"), 2.25);
+  line(stockPts, css("--stock"), 3);
+  const last = stockPts.at(-1);
+  el("circle", { cx: X(last[0]), cy: Y(last[1]), r: 5, fill: css("--stock"), stroke: css("--panel"), "stroke-width": 2 }, svg);
+  const lt = el("text", { x: X(last[0]) + 8, y: Y(last[1]) + 4, fill: css("--ink"), "font-size": 12, "font-weight": 700 }, svg); lt.textContent = `今 ${last[1].toFixed(2)}`;
+  if (w.x_tweet != null) {
+    const td = w.dates.indexOf(DATA.tweet_date) >= 0 ? w.dates.indexOf(DATA.tweet_date) : w.dates.findIndex(d => d > DATA.tweet_date);
+    if (td >= 0) { el("circle", { cx: X(td), cy: Y(w.path[td]), r: 4.5, fill: css("--panel"), stroke: css("--stock"), "stroke-width": 2 }, svg);
+      const t = el("text", { x: X(td), y: Y(w.path[td]) - 10, "text-anchor": "middle", fill: css("--ink-2"), "font-size": 11 }, svg); t.textContent = "投稿 10/6"; }
+  }
+  // hover
+  const cross = el("line", { y1: pad.t, y2: height - pad.b, stroke: css("--ink-3"), opacity: 0 }, svg);
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+  const hit = el("rect", { x: pad.l, y: pad.t, width: width - pad.l - pad.r, height: height - pad.t - pad.b, fill: "transparent" }, svg);
+  const move = e => {
+    const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) * width / r.width;
+    const d = Math.max(x0, Math.min(x1, Math.round(x0 + (sx - pad.l) / (width - pad.l - pad.r) * (x1 - x0))));
+    cross.setAttribute("x1", X(d)); cross.setAttribute("x2", X(d)); cross.setAttribute("opacity", .6);
+    const f = v => v == null ? "—" : v.toFixed(2);
+    const sp = stockPts.find(p => p[0] === d);
+    let h = `<div class="k">${d === 0 ? "天井の日" : d < 0 ? `天井の${-d}営業日前` : `天井から${d}営業日後`}${d > 0 && w.dates[d] ? `（${w.name}は${ymd(w.dates[d])}）` : ""}</div>`;
+    if (d >= 0) h += `<div>全急騰の中央値 <b class="num">${f(A.med[d])}</b> <span class="k num">(${f(A.lo[d])}〜${f(A.hi[d])})</span></div>
+      <div><span class="sw" style="background:var(--gline)"></span>緑の中央値 <span class="num">${f(G.med[d])}</span></div>
+      <div><span class="sw" style="background:var(--bline)"></span>青の中央値 <span class="num">${f(B.med[d])}</span></div>`;
+    else h += `<div>全急騰の中央値 <b class="num">${f(pre.med[-d])}</b></div>`;
+    if (sp) h += `<div><span class="sw" style="background:var(--stock)"></span>${w.name} <b class="num">${f(sp[1])}</b></div>`;
+    tip.innerHTML = h; tip.hidden = false;
+    const bw = box.clientWidth, px = X(d) * bw / width;
+    tip.style.left = (px > bw * .6 ? px - tip.offsetWidth - 12 : px + 12) + "px"; tip.style.top = "8px";
+  };
+  hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("opacity", 0); });
+  $("#lg-stock").textContent = w.name;
+}
+
+function drawPrice() {
+  const box = $("#price"); box.innerHTML = "";
+  const w = DATA.watch[sel], c = w.close, ds = w.cdates, n = c.length;
+  const mid = w.low + (w.top - w.low) / 2;
+  const width = Math.max(320, box.clientWidth), height = Math.round(Math.min(360, Math.max(240, width * .38)));
+  const pad = { l: 60, r: 64, t: 14, b: 30 };
+  let lo = Math.min(...c, w.low), hi = Math.max(...c); const g = (hi - lo) * .06; lo -= g; hi += g;
+  const X = i => pad.l + i / (n - 1) * (width - pad.l - pad.r), Y = v => pad.t + (1 - (v - lo) / (hi - lo)) * (height - pad.t - pad.b);
+  const svg = el("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": `${w.name}の株価と半値ライン` }, box);
+  const gg = el("g", { class: "grid" }, svg), ax = el("g", { class: "axis" }, svg);
+  niceTicks(lo, hi).forEach(v => { el("line", { x1: pad.l, x2: width - pad.r, y1: Y(v), y2: Y(v) }, gg);
+    const t = el("text", { x: pad.l - 8, y: Y(v) + 4, "text-anchor": "end" }, ax); t.textContent = yen(v); });
+  const seen = new Set(); let lastX = -99; ds.forEach((d, i) => { const ym = d.slice(0, 7); if (seen.has(ym)) return; seen.add(ym);
+    if (X(i) - lastX < 34) return; lastX = X(i);
+    const t = el("text", { x: X(i), y: height - 8, "text-anchor": "middle" }, ax); t.textContent = d.slice(5, 7) + "月"; });
+  [[w.top, "天井"], [mid, "半値"], [w.low, "起点"]].forEach(([v, s]) => {
+    el("line", { x1: pad.l, x2: width - pad.r, y1: Y(v), y2: Y(v), stroke: css("--ink-3"), "stroke-dasharray": s === "半値" ? "5 3" : "2 3" }, svg);
+    const t = el("text", { x: width - pad.r + 6, y: Y(v) + 4, fill: css("--ink-2"), "font-size": 11, "font-weight": s === "半値" ? 700 : 400 }, svg); t.textContent = s;
+  });
+  const ti = ds.findIndex(d => d >= DATA.tweet_date);
+  if (ti >= 0) { el("line", { x1: X(ti), x2: X(ti), y1: pad.t, y2: height - pad.b, stroke: css("--ink-3") }, svg);
+    const t = el("text", { x: X(ti) + 4, y: pad.t + 12, fill: css("--ink-2"), "font-size": 11 }, svg); t.textContent = "投稿 10/6"; }
+  el("path", { d: c.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(""), fill: "none", stroke: css("--stock"), "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+  el("circle", { cx: X(n - 1), cy: Y(c[n - 1]), r: 4.5, fill: css("--stock"), stroke: css("--panel"), "stroke-width": 2 }, svg);
+  const cross = el("line", { y1: pad.t, y2: height - pad.b, stroke: css("--ink-3"), opacity: 0 }, svg);
+  const dot = el("circle", { r: 4, fill: css("--stock"), stroke: css("--panel"), "stroke-width": 2, opacity: 0 }, svg);
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+  const hit = el("rect", { x: pad.l, y: pad.t, width: width - pad.l - pad.r, height: height - pad.t - pad.b, fill: "transparent" }, svg);
+  const move = e => {
+    const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) * width / r.width;
+    const i = Math.max(0, Math.min(n - 1, Math.round((sx - pad.l) / (width - pad.l - pad.r) * (n - 1))));
+    cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("opacity", .6);
+    dot.setAttribute("cx", X(i)); dot.setAttribute("cy", Y(c[i])); dot.setAttribute("opacity", 1);
+    const x = (c[i] - w.low) / (w.top - w.low);
+    tip.innerHTML = `<div class="k">${ymd(ds[i])}</div><div>${w.name} <b class="num">${yen(c[i])}円</b></div><div class="k">位置 x <span class="num">${x.toFixed(2)}</span></div>`;
+    tip.hidden = false; const bw = box.clientWidth, px = X(i) * bw / width;
+    tip.style.left = (px > bw * .6 ? px - tip.offsetWidth - 12 : px + 12) + "px"; tip.style.top = "8px";
+  };
+  hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("opacity", 0); dot.setAttribute("opacity", 0); });
+  $("#s-h").textContent = `${w.name}の株価と半値ライン`;
+  $("#s-sub").innerHTML = `起点 ${ymd(w.start)} <span class="num">${yen(w.low)}円</span> → 天井 ${ymd(w.peak)} <span class="num">${yen(w.top)}円</span>（<span class="num">${pct(w.gain)}</span>、${w.rally_days}営業日）· 半値 <span class="num">${yen(mid)}円</span> · 現在 <b class="num">${yen(c[n - 1])}円</b>`;
+}
+
+function drawStats() {
+  $("#stats").innerHTML = `
+    <div class="stat"><b>${P(S.touch_rate)}</b><span>天井から120営業日以内に半値まで下げた割合</span></div>
+    <div class="stat"><b>${Math.round(S.touch_med)}日</b><span>半値に届くまでの中央値（営業日）</span></div>
+    <div class="stat"><b>${P(S.retrace_med)}</b><span>天井後120日で吐き出した上げ幅（中央値）</span></div>
+    <div class="stat"><b>${P(S.g2b250)}</b><span>緑だったのに1年以内に青まで崩れた割合</span></div>`;
+  $("#after").textContent = DATA.params.after;
+  $("#split").innerHTML = [["緑（保ち合い）", S.green, "--gline"], ["中間", S.mid, "--band"], ["青（ダラダラ下げ）", S.blue, "--bline"]]
+    .map(([l, v, c]) => `<div style="flex:${v};background:var(${c})" title="${l} ${P(v)}">${l} ${P(v)}</div>`).join("");
+  const sp = S.split;
+  $("#splittbl").innerHTML = `<thead><tr><th class="l">分かれた後</th><th>件数</th><th>60日後の騰落（中央値）</th><th>上昇した割合</th><th>190日後の騰落（中央値）</th><th>上昇した割合</th></tr></thead><tbody>` +
+    ["緑", "中間", "青"].map(b => `<tr><td class="l"><span class="pill ${b === "緑" ? "pg" : b === "青" ? "pb" : "pm"}">${b}</span></td><td class="num">${sp[b].n}</td><td class="num">${pct(sp[b].f60, 1)}</td><td class="num">${P(sp[b].up60)}</td><td class="num">${pct(sp[b].f190, 1)}</td><td class="num">${P(sp[b].up190)}</td></tr>`).join("") + "</tbody>";
+}
+
+function drawWatch() {
+  $("#watch").innerHTML = `<thead><tr><th class="l">銘柄</th><th>起点</th><th>天井</th><th>上昇率</th><th>半値タッチ</th><th>10/6の位置</th><th>現在の位置</th><th>現在の株価</th></tr></thead><tbody>` +
+    DATA.watch.map(w => { const a = branch(w.x_tweet), b = branch(w.path.at(-1));
+      return `<tr><td class="l">${w.name}</td><td class="num">${ymd(w.start)}</td><td class="num">${ymd(w.peak)}</td><td class="num">${pct(w.gain)}</td><td class="num">${ymd(w.touch)}</td>
+        <td class="num">${w.x_tweet == null ? "—" : w.x_tweet.toFixed(2)} <span class="pill ${a[1]}">${a[0]}</span></td>
+        <td class="num">${w.path.at(-1).toFixed(2)} <span class="pill ${b[1]}">${b[0]}</span></td><td class="num">${yen(w.close.at(-1))}円</td></tr>`; }).join("") + "</tbody>";
+}
+
+function render() { drawChips(); drawPattern(); drawPrice(); }
+fillText(); drawStats(); drawWatch(); render();
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 150); });
+const re = () => { drawStats(); render(); };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", re);
+new MutationObserver(re).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>
